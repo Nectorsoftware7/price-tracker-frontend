@@ -42,7 +42,11 @@ export default function PriceAnalytics() {
       <p style={{ color: "#4c6b8a", marginTop: -8 }}>Pick any tracked product to see its price history and stock timeline.</p>
 
       <div className="card">
-        <select value={productId} onChange={(e) => setProductId(Number(e.target.value))} style={{ minWidth: 320 }}>
+        <select
+          value={productId}
+          onChange={(e) => setProductId(Number(e.target.value))}
+          style={{ width: "100%", maxWidth: 480 }}
+        >
           {products.map((p) => (
             <option key={p._id} value={p._id}>
               {p.name} ({p.site})

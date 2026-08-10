@@ -177,6 +177,15 @@ input, select {
   padding: 8px 10px;
   border-radius: 6px;
   font-size: 13px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Long product names in the closed <select> box truncate with an ellipsis instead of
+   forcing the box (and page) wider than the viewport on mobile. */
+select {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 input:focus, select:focus {
   outline: none;

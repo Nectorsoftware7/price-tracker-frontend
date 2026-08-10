@@ -97,7 +97,7 @@ export default function Products() {
           <div className="form-row">
             <input
               placeholder="Product URL (paste the normal page link)"
-              style={{ flex: 1, minWidth: 320 }}
+              style={{ flex: "1 1 240px", minWidth: 0 }}
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
               required
@@ -107,7 +107,7 @@ export default function Products() {
             <div className="form-row">
               <input
                 placeholder="Flipkart SKU (optional — enables exact stock via Seller API)"
-                style={{ flex: 1, minWidth: 320 }}
+                style={{ flex: "1 1 240px", minWidth: 0 }}
                 value={form.flipkartSku}
                 onChange={(e) => setForm({ ...form, flipkartSku: e.target.value })}
               />
