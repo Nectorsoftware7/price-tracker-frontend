@@ -17,7 +17,13 @@ export default function Navbar({ onToggleSidebar }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  const initial = (username || "?").charAt(0).toUpperCase();
+  // Show the username's first and last letter (e.g. "Price_Tracker" -> "PR") instead of
+  // a generic "?" whenever we actually know who's logged in.
+  const avatarLabel = username
+    ? username.length > 1
+      ? `${username[0]}${username[username.length - 1]}`.toUpperCase()
+      : username[0].toUpperCase()
+    : "?";
 
   return (
     <header className="navbar">
@@ -33,7 +39,7 @@ export default function Navbar({ onToggleSidebar }) {
 
       <div className="navbar-profile" ref={menuRef}>
         <button className="avatar-btn" aria-label="Account menu" onClick={() => setMenuOpen((open) => !open)}>
-          {initial}
+          {avatarLabel}
         </button>
         {menuOpen && (
           <div className="avatar-menu">
