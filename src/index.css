@@ -126,6 +126,7 @@ a { color: var(--blue-900); }
   border-top: 1px solid var(--border);
   text-align: center;
   font-size: 12px;
+  font-weight: 700;
   color: var(--text-muted);
 }
 
