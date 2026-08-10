@@ -88,6 +88,10 @@ export default function Products() {
               <option value="flipkart">Flipkart</option>
               <option value="meesho">Meesho</option>
               <option value="jiomart">JioMart</option>
+              <option value="tira">Tira</option>
+              <option value="nykaa">Nykaa</option>
+              <option value="snapdeal">Snapdeal</option>
+              <option value="purplle">Purplle</option>
             </select>
           </div>
           <div className="form-row">
