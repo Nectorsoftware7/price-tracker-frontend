@@ -7,8 +7,8 @@
   --text: #12233d;
   --text-muted: #4c6b8a;
   --border: #bfe0fb;
-  --navbar-bg: #00695c;
-  --navbar-bg-hover: #004d40;
+  --navbar-bg: #ff4800;
+  --navbar-bg-hover: #e61212;
 }
 
 * { box-sizing: border-box; }
