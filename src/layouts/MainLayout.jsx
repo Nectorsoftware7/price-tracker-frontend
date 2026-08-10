@@ -33,6 +33,9 @@ export default function MainLayout() {
       </aside>
       <main className="main">
         <Outlet />
+        <footer className="app-footer">
+          &copy; {new Date().getFullYear()} Nector Foods Pvt Ltd. All rights reserved.
+        </footer>
       </main>
     </div>
   );
