@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { useAuth } from "../features/auth/AuthContext.jsx";
+import Navbar from "./Navbar.jsx";
 
 export default function MainLayout() {
-  const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function closeSidebar() {
@@ -12,20 +11,11 @@ export default function MainLayout() {
 
   return (
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
-      <button
-        className="hamburger-btn"
-        aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-        onClick={() => setSidebarOpen((open) => !open)}
-      >
-        <span />
-        <span />
-        <span />
-      </button>
+      <Navbar onToggleSidebar={() => setSidebarOpen((open) => !open)} />
 
       {sidebarOpen && <div className="sidebar-backdrop" onClick={closeSidebar} />}
 
       <aside className="sidebar">
-        <h1>Price Tracker</h1>
         <nav>
           <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Products
@@ -40,9 +30,6 @@ export default function MainLayout() {
             Contact Form
           </NavLink>
         </nav>
-        <button className="btn secondary" style={{ marginTop: 24, width: "100%" }} onClick={logout}>
-          Log out
-        </button>
       </aside>
       <main className="main">
         <Outlet />

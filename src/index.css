@@ -10,7 +10,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body, #root { height: 100%; }
+html, body, #root { height: 100%; width: 100%; }
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -20,18 +20,86 @@ body {
 }
 a { color: var(--blue-900); }
 
-.app-shell { display: flex; height: 100vh; }
-.sidebar {
-  width: 200px;
+.app-shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: 56px 1fr;
+  width: 100%;
   height: 100vh;
+}
+
+.navbar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--blue-900);
+  padding: 0 16px;
+  position: relative;
+  z-index: 30;
+  box-sizing: border-box;
+}
+.navbar-brand {
+  /* Absolute + translate centers this on the navbar's true midpoint regardless of
+     how wide the hamburger/avatar siblings are — margin:auto only centers within the
+     leftover flex space, which shifts off-center whenever those siblings differ in width. */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--white);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.navbar-hamburger { position: static; display: none; }
+.navbar-profile { position: relative; margin-left: auto; }
+.avatar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--blue-500);
+  color: var(--white);
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.avatar-btn:hover { background: var(--blue-200); color: var(--blue-900); }
+.avatar-menu {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(13, 71, 161, 0.18);
+  padding: 12px;
+  width: 200px;
+  z-index: 40;
+}
+.avatar-menu-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.avatar-menu-dot { width: 8px; height: 8px; border-radius: 50%; background: #c0392b; flex-shrink: 0; }
+.avatar-menu-dot.online { background: #1c7a3c; }
+
+.sidebar {
+  grid-column: 1;
+  grid-row: 2;
+  width: 200px;
   overflow-y: auto;
   background: var(--blue-900);
   padding: 20px 12px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
 }
-.sidebar h1 { font-size: 16px; margin: 0 0 24px; padding: 0 8px; color: var(--white); }
 .sidebar nav a {
   display: block;
   padding: 10px 8px;
@@ -43,7 +111,7 @@ a { color: var(--blue-900); }
 .sidebar nav a.active { background: var(--blue-500); color: var(--white); }
 .sidebar nav a:hover:not(.active) { background: rgba(255,255,255,0.08); color: var(--white); }
 
-.main { flex: 1; height: 100vh; overflow-y: auto; padding: 28px 36px; max-width: 1100px; }
+.main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 28px 36px; max-width: 1100px; }
 .main h2 { color: var(--blue-900); }
 
 .card {
@@ -113,22 +181,19 @@ input[type="date"] {
 .card { overflow-x: auto; }
 
 .hamburger-btn {
-  display: none;
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 30;
-  width: 40px;
-  height: 40px;
-  background: var(--blue-900);
+  width: 36px;
+  height: 36px;
+  background: transparent;
   border: none;
   border-radius: 8px;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   cursor: pointer;
 }
+.hamburger-btn:hover { background: rgba(255, 255, 255, 0.1); }
 .hamburger-btn span {
   display: block;
   width: 20px;
@@ -142,18 +207,25 @@ input[type="date"] {
 }
 
 /* Below this width the fixed sidebar leaves too little room for content — hide it
-   behind a hamburger toggle instead of squeezing it into the layout. */
+   behind a hamburger toggle (in the navbar) instead of squeezing it into the layout. */
 @media (max-width: 860px) {
-  .hamburger-btn { display: flex; }
+  .app-shell { grid-template-columns: 1fr; }
 
-  .app-shell { position: relative; }
+  /* .main still explicitly requests grid-column 2 from the desktop rule — with only
+     one explicit column defined above, that forces the browser to fabricate an
+     implicit second column instead of using the single one, splitting the layout.
+     Since the sidebar is position: fixed here (removed from grid flow), .main is the
+     only real grid item and just needs to sit in the one column that exists. */
+  .main { grid-column: 1; }
+
+  .navbar-hamburger { display: flex; }
 
   .sidebar {
     position: fixed;
-    top: 0;
+    top: 56px;
     left: 0;
-    height: 100vh;
-    width: 220px;
+    height: calc(100vh - 56px);
+    width: 240px;
     z-index: 25;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
@@ -165,16 +237,20 @@ input[type="date"] {
   .app-shell.sidebar-open .sidebar-backdrop {
     display: block;
     position: fixed;
-    inset: 0;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.4);
     z-index: 20;
   }
 
-  .main { padding: 70px 16px 18px; max-width: 100%; }
+  .main { padding: 18px 16px; max-width: 100%; }
 }
 
 @media (max-width: 480px) {
-  .main { padding: 64px 14px 14px; }
+  .main { padding: 14px; }
+  .navbar-brand { font-size: 15px; }
   .form-row { flex-direction: column; align-items: stretch; }
   .stat-row { gap: 10px; }
   .btn { width: 100%; }
