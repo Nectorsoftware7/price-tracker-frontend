@@ -15,6 +15,7 @@ export default function Products() {
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [checkingAll, setCheckingAll] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -64,6 +65,19 @@ export default function Products() {
       setError(err.message);
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function handleCheckAll() {
+    setCheckingAll(true);
+    setError(null);
+    try {
+      await api.checkAll();
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCheckingAll(false);
     }
   }
 
@@ -125,7 +139,13 @@ export default function Products() {
         ) : products.length === 0 ? (
           <p>No products tracked yet — add one above.</p>
         ) : (
-          <table>
+          <>
+            <div className="form-row" style={{ justifyContent: "flex-end" }}>
+              <button className="btn" disabled={checkingAll} onClick={handleCheckAll}>
+                {checkingAll ? "Checking all products..." : "Check all products"}
+              </button>
+            </div>
+            <table>
             <thead>
               <tr>
                 <th>Name</th>
@@ -153,7 +173,8 @@ export default function Products() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </>
         )}
       </div>
     </div>

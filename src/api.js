@@ -40,6 +40,7 @@ export const api = {
   getHistoryRange: (id, from, to) => request(`/products/${id}/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
   getStockEvents: (id) => request(`/products/${id}/stock-events`),
   checkNow: (id) => request(`/products/${id}/check-now`, { method: "POST" }),
+  checkAll: () => request("/products/check-all", { method: "POST" }),
 
   getContactSubmissions: () => request("/contact-form"),
   sendManualReply: (id, message) => request(`/contact-form/${id}/reply`, { method: "POST", body: JSON.stringify({ message }) }),
