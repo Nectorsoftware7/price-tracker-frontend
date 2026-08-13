@@ -12,6 +12,7 @@ const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -38,15 +39,17 @@ export default function Products() {
     load();
   }, []);
 
-  async function handleAdd(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setAdding(true);
     setError(null);
     try {
-      const product = await api.createProduct(form);
+      const product = editingId ? await api.updateProduct(editingId, form) : await api.createProduct(form);
       setForm(EMPTY_FORM);
-      // Fetch price/stock immediately so the row doesn't sit at "Unknown"/"never"
-      // until the next scheduled check.
+      setEditingId(null);
+      // Fetch price/stock immediately (with the possibly-changed URL/site) instead of
+      // leaving the row showing stale data — or "Unknown" for a new one — until the
+      // next scheduled check.
       await api.checkNow(product._id);
     } catch (err) {
       setError(err.message);
@@ -54,6 +57,17 @@ export default function Products() {
       setAdding(false);
       load();
     }
+  }
+
+  function handleEditClick(product) {
+    setEditingId(product._id);
+    setForm({ name: product.name, site: product.site, url: product.url, flipkartSku: product.flipkartSku || "" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
   }
 
   async function handleDelete(id) {
@@ -183,8 +197,8 @@ export default function Products() {
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Add product</h3>
-        <form onSubmit={handleAdd}>
+        <h3 style={{ marginTop: 0 }}>{editingId ? "Edit product" : "Add product"}</h3>
+        <form onSubmit={handleSubmit}>
           <div className="form-row">
             <input
               placeholder="Product name"
@@ -223,9 +237,16 @@ export default function Products() {
               />
             </div>
           )}
-          <button className="btn" type="submit" disabled={adding}>
-            {adding ? "Adding & checking..." : "Add product"}
-          </button>
+          <div className="form-row">
+            <button className="btn" type="submit" disabled={adding}>
+              {adding ? (editingId ? "Saving & checking..." : "Adding & checking...") : editingId ? "Save changes" : "Add product"}
+            </button>
+            {editingId && (
+              <button type="button" className="btn secondary" onClick={handleCancelEdit} disabled={adding}>
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -310,6 +331,7 @@ export default function Products() {
                     <button className="btn secondary" disabled={busyId === p._id} onClick={() => handleCheckNow(p._id)}>
                       {busyId === p._id ? "Checking..." : "Check now"}
                     </button>
+                    <button className="btn secondary" onClick={() => handleEditClick(p)}>Edit</button>
                     <button className="btn danger" onClick={() => handleDelete(p._id)}>Delete</button>
                   </td>
                 </tr>
