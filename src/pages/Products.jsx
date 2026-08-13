@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { api } from "../api";
@@ -23,6 +23,7 @@ export default function Products() {
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
+  const formCardRef = useRef(null);
 
   async function load() {
     setLoading(true);
@@ -62,7 +63,10 @@ export default function Products() {
   function handleEditClick(product) {
     setEditingId(product._id);
     setForm({ name: product.name, site: product.site, url: product.url, flipkartSku: product.flipkartSku || "" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // The page itself never scrolls (body { overflow: hidden }) — .main is the actual
+    // scrolling container, so window.scrollTo was a no-op. scrollIntoView finds
+    // whichever ancestor actually scrolls, so it works regardless of layout.
+    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function handleCancelEdit() {
@@ -196,7 +200,7 @@ export default function Products() {
       <h2>Tracked products</h2>
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
 
-      <div className="card">
+      <div className="card" ref={formCardRef}>
         <h3 style={{ marginTop: 0 }}>{editingId ? "Edit product" : "Add product"}</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
