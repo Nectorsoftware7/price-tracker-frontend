@@ -21,6 +21,7 @@ export default function Products() {
   const [bulkRows, setBulkRows] = useState([]);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
+  const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -132,8 +133,9 @@ export default function Products() {
     setBulkImporting(true);
     setError(null);
     setBulkResult(null);
+    let result;
     try {
-      const result = await api.bulkImportProducts(bulkRows);
+      result = await api.bulkImportProducts(bulkRows);
       setBulkResult(result);
       setBulkRows([]);
       setBulkFileName("");
@@ -142,6 +144,23 @@ export default function Products() {
     } finally {
       setBulkImporting(false);
       load();
+    }
+
+    // Bulk-created products otherwise sit at "Unknown"/"never" until the next hourly
+    // check — same reason a single "Add product" auto-checks immediately. Done one at
+    // a time (not all at once) since each check is a full Playwright browser launch on
+    // the server and could easily overload it if fired concurrently for a big import.
+    if (result?.created?.length) {
+      for (let i = 0; i < result.created.length; i++) {
+        setBulkCheckProgress({ done: i, total: result.created.length });
+        try {
+          await api.checkNow(result.created[i]._id);
+        } catch {
+          // A single product's check failing shouldn't stop the rest from being tried.
+        }
+        load();
+      }
+      setBulkCheckProgress(null);
     }
   }
 
@@ -247,12 +266,12 @@ export default function Products() {
                 ))}
               </ul>
             )}
-            {bulkResult.created.length > 0 && (
-              <p style={{ color: "#666", fontSize: 13 }}>
-                Click "Check all products" below to fetch their price/stock now.
-              </p>
-            )}
           </div>
+        )}
+        {bulkCheckProgress && (
+          <p style={{ color: "#666", fontSize: 13 }}>
+            Fetching price/stock for new products: {bulkCheckProgress.done}/{bulkCheckProgress.total}...
+          </p>
         )}
       </div>
 
