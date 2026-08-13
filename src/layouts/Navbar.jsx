@@ -33,7 +33,8 @@ export default function Navbar({ onToggleSidebar }) {
         <span />
       </button>
 
-      <Link to="/" className="navbar-brand">
+      <Link to="/" className="navbar-brand" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <img src="/purna-logo.png" alt="" style={{ height: 28, width: "auto" }} />
         Price Tracker
       </Link>
 
