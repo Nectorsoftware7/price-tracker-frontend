@@ -65,8 +65,10 @@ export default function Products() {
     setForm({ name: product.name, site: product.site, url: product.url, flipkartSku: product.flipkartSku || "" });
     // The page itself never scrolls (body { overflow: hidden }) — .main is the actual
     // scrolling container, so window.scrollTo was a no-op. scrollIntoView finds
-    // whichever ancestor actually scrolls, so it works regardless of layout.
-    formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // whichever ancestor actually scrolls, so it works regardless of layout. Instant
+    // (not "smooth") — a smooth scroll only animates while the tab is actually being
+    // composited/rendered, which isn't guaranteed at the moment a click handler runs.
+    formCardRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
   }
 
   function handleCancelEdit() {
