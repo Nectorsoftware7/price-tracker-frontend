@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import * as XLSX from "xlsx";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 
@@ -16,7 +17,8 @@ export default function Products() {
   const [busyId, setBusyId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [checkingAll, setCheckingAll] = useState(false);
-  const [bulkText, setBulkText] = useState("");
+  const [bulkFileName, setBulkFileName] = useState("");
+  const [bulkRows, setBulkRows] = useState([]);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
 
@@ -71,15 +73,15 @@ export default function Products() {
     }
   }
 
-  // Accepts rows pasted straight out of a spreadsheet (tab-separated when copied from
-  // Google Sheets/Excel). Supports either 3 columns (Platform, Product Name, Link) or
-  // 4 (Platform, Brand, Product Name, Link) — Brand is dropped either way, since the
-  // tracker itself has no use for it. A header row (first cell "platform") is skipped.
-  function parseBulkRows(text) {
-    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  // Converts a worksheet's raw rows (array-of-arrays, header included) into product
+  // rows. Supports either 3 columns (Platform, Product Name, Link) or 4 (Platform,
+  // Brand, Product Name, Link) — Brand is dropped either way, since the tracker has no
+  // use for it. A header row (first cell "platform") is skipped.
+  function sheetRowsToProducts(sheetRows) {
     const rows = [];
-    for (const line of lines) {
-      const cols = line.split("\t").map((c) => c.trim());
+    for (const raw of sheetRows) {
+      const cols = raw.map((c) => String(c ?? "").trim());
+      if (!cols.some(Boolean)) continue; // blank row
       if (cols[0]?.toLowerCase() === "platform") continue; // header row
       if (cols.length >= 4) {
         rows.push({ site: cols[0], name: cols[2], url: cols[3] });
@@ -90,19 +92,51 @@ export default function Products() {
     return rows;
   }
 
+  function handleBulkFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setBulkResult(null);
+    setBulkFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const workbook = XLSX.read(evt.target.result, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const sheetRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        const rows = sheetRowsToProducts(sheetRows);
+        if (rows.length === 0) {
+          setError("Couldn't find any valid rows in that file — use the template below (Platform, Product Name, Link columns).");
+        }
+        setBulkRows(rows);
+      } catch (err) {
+        setError("Couldn't read that file — make sure it's a valid .xlsx/.xls/.csv file.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function handleDownloadTemplate() {
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ["Platform", "Brand", "Product Name", "Product Link"],
+      ["Flipkart", "KOBRA", "KOBRA Gokshura Tablets Supplement Tablets (30 Tablets)", "https://www.flipkart.com/kobra-gokshura-tablets-supplement/p/itm1fc97e62f760d"],
+    ]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+    XLSX.writeFile(workbook, "price-tracker-bulk-import-template.xlsx");
+  }
+
   async function handleBulkImport() {
-    const rows = parseBulkRows(bulkText);
-    if (rows.length === 0) {
-      setError("Couldn't find any valid rows to import — paste tab-separated Platform / Product Name / Link columns.");
-      return;
-    }
+    if (bulkRows.length === 0) return;
     setBulkImporting(true);
     setError(null);
     setBulkResult(null);
     try {
-      const result = await api.bulkImportProducts(rows);
+      const result = await api.bulkImportProducts(bulkRows);
       setBulkResult(result);
-      setBulkText("");
+      setBulkRows([]);
+      setBulkFileName("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -179,19 +213,25 @@ export default function Products() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Bulk import</h3>
         <p style={{ marginTop: 0, color: "#666" }}>
-          Copy rows straight from a spreadsheet (Platform, Product Name, Link — a Brand column in
-          between is fine too, it's ignored) and paste them below.
+          Upload an Excel file with Platform, Product Name and Link columns (a Brand column in
+          between is fine too, it's ignored). Not sure of the format — download the template first.
         </p>
-        <textarea
-          rows={6}
-          style={{ width: "100%", fontFamily: "monospace" }}
-          placeholder={"Flipkart\tKOBRA Gokshura...\thttps://www.flipkart.com/...\nShopify\tBeast Mass Gainer\thttps://kobralabs.com/..."}
-          value={bulkText}
-          onChange={(e) => setBulkText(e.target.value)}
-        />
+        <div className="form-row">
+          <button type="button" className="btn secondary" onClick={handleDownloadTemplate}>
+            Download template
+          </button>
+        </div>
         <div className="form-row" style={{ marginTop: 8 }}>
-          <button className="btn" disabled={bulkImporting || !bulkText.trim()} onClick={handleBulkImport}>
-            {bulkImporting ? "Importing..." : "Import products"}
+          <input type="file" accept=".xlsx,.xls,.csv" onChange={handleBulkFileChange} />
+        </div>
+        {bulkFileName && (
+          <p style={{ fontSize: 13, color: "#666" }}>
+            {bulkFileName} — {bulkRows.length} product{bulkRows.length === 1 ? "" : "s"} found
+          </p>
+        )}
+        <div className="form-row" style={{ marginTop: 8 }}>
+          <button className="btn" disabled={bulkImporting || bulkRows.length === 0} onClick={handleBulkImport}>
+            {bulkImporting ? "Importing..." : `Import ${bulkRows.length || ""} product${bulkRows.length === 1 ? "" : "s"}`}
           </button>
         </div>
         {bulkResult && (
