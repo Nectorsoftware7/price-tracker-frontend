@@ -23,7 +23,13 @@ export default function Products() {
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const formCardRef = useRef(null);
+
+  function flashSuccess(message) {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage((current) => (current === message ? null : current)), 4000);
+  }
 
   async function load() {
     setLoading(true);
@@ -42,21 +48,26 @@ export default function Products() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const wasEditing = Boolean(editingId);
     setAdding(true);
     setError(null);
     try {
-      const product = editingId ? await api.updateProduct(editingId, form) : await api.createProduct(form);
+      const product = wasEditing ? await api.updateProduct(editingId, form) : await api.createProduct(form);
       setForm(EMPTY_FORM);
       setEditingId(null);
-      // Fetch price/stock immediately (with the possibly-changed URL/site) instead of
-      // leaving the row showing stale data — or "Unknown" for a new one — until the
-      // next scheduled check.
+      setAdding(false);
+      // The save itself (PUT/POST) is fast — confirm success and refresh the table
+      // right away instead of leaving the user staring at "Saving..." for however
+      // long the price/stock check takes (a JioMart check via ScraperAPI alone can
+      // take 60-100s+). The check-now below fills in price/stock in the background;
+      // its own load() afterward updates that once it's ready.
+      flashSuccess(wasEditing ? "✅ Product updated" : "✅ Product added");
+      load();
       await api.checkNow(product._id);
+      load();
     } catch (err) {
       setError(err.message);
-    } finally {
       setAdding(false);
-      load();
     }
   }
 
@@ -201,6 +212,7 @@ export default function Products() {
     <div>
       <h2>Tracked products</h2>
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
+      {successMessage && <div className="card" style={{ color: "#1a7f37" }}>{successMessage}</div>}
 
       <div className="card" ref={formCardRef}>
         <h3 style={{ marginTop: 0 }}>{editingId ? "Edit product" : "Add product"}</h3>
