@@ -16,6 +16,9 @@ export default function Products() {
   const [busyId, setBusyId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [checkingAll, setCheckingAll] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -65,6 +68,46 @@ export default function Products() {
       setError(err.message);
     } finally {
       setBusyId(null);
+    }
+  }
+
+  // Accepts rows pasted straight out of a spreadsheet (tab-separated when copied from
+  // Google Sheets/Excel). Supports either 3 columns (Platform, Product Name, Link) or
+  // 4 (Platform, Brand, Product Name, Link) — Brand is dropped either way, since the
+  // tracker itself has no use for it. A header row (first cell "platform") is skipped.
+  function parseBulkRows(text) {
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    const rows = [];
+    for (const line of lines) {
+      const cols = line.split("\t").map((c) => c.trim());
+      if (cols[0]?.toLowerCase() === "platform") continue; // header row
+      if (cols.length >= 4) {
+        rows.push({ site: cols[0], name: cols[2], url: cols[3] });
+      } else if (cols.length === 3) {
+        rows.push({ site: cols[0], name: cols[1], url: cols[2] });
+      }
+    }
+    return rows;
+  }
+
+  async function handleBulkImport() {
+    const rows = parseBulkRows(bulkText);
+    if (rows.length === 0) {
+      setError("Couldn't find any valid rows to import — paste tab-separated Platform / Product Name / Link columns.");
+      return;
+    }
+    setBulkImporting(true);
+    setError(null);
+    setBulkResult(null);
+    try {
+      const result = await api.bulkImportProducts(rows);
+      setBulkResult(result);
+      setBulkText("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBulkImporting(false);
+      load();
     }
   }
 
@@ -131,6 +174,46 @@ export default function Products() {
             {adding ? "Adding & checking..." : "Add product"}
           </button>
         </form>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Bulk import</h3>
+        <p style={{ marginTop: 0, color: "#666" }}>
+          Copy rows straight from a spreadsheet (Platform, Product Name, Link — a Brand column in
+          between is fine too, it's ignored) and paste them below.
+        </p>
+        <textarea
+          rows={6}
+          style={{ width: "100%", fontFamily: "monospace" }}
+          placeholder={"Flipkart\tKOBRA Gokshura...\thttps://www.flipkart.com/...\nShopify\tBeast Mass Gainer\thttps://kobralabs.com/..."}
+          value={bulkText}
+          onChange={(e) => setBulkText(e.target.value)}
+        />
+        <div className="form-row" style={{ marginTop: 8 }}>
+          <button className="btn" disabled={bulkImporting || !bulkText.trim()} onClick={handleBulkImport}>
+            {bulkImporting ? "Importing..." : "Import products"}
+          </button>
+        </div>
+        {bulkResult && (
+          <div style={{ marginTop: 8 }}>
+            <p>
+              <b>{bulkResult.created.length}</b> added
+              {bulkResult.skipped.length > 0 && <>, <b>{bulkResult.skipped.length}</b> skipped</>}
+            </p>
+            {bulkResult.skipped.length > 0 && (
+              <ul style={{ color: "#a71d1d", fontSize: 13 }}>
+                {bulkResult.skipped.map((s, i) => (
+                  <li key={i}>{s.name || s.url || "(blank row)"} — {s.reason}</li>
+                ))}
+              </ul>
+            )}
+            {bulkResult.created.length > 0 && (
+              <p style={{ color: "#666", fontSize: 13 }}>
+                Click "Check all products" below to fetch their price/stock now.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card">

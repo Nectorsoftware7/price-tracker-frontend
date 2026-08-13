@@ -34,6 +34,7 @@ export const api = {
 
   getProducts: () => request("/products"),
   createProduct: (data) => request("/products", { method: "POST", body: JSON.stringify(data) }),
+  bulkImportProducts: (rows) => request("/products/bulk-import", { method: "POST", body: JSON.stringify({ rows }) }),
   updateProduct: (id, data) => request(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteProduct: (id) => request(`/products/${id}`, { method: "DELETE" }),
   getHistory: (id, days = 7) => request(`/products/${id}/history?days=${days}`),
