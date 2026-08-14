@@ -57,8 +57,13 @@ export default function LoginPage() {
   // "Sign in with Google" is optional — only rendered once the site's Google OAuth
   // client ID is configured (VITE_GOOGLE_CLIENT_ID). Loads Google's own script rather
   // than a wrapper package so there's nothing to install for a single button.
+  //
+  // Depends on blockedScreen (only actually runs once it's back to null) because the
+  // "under review"/"suspended" screens replace the whole form — including the button's
+  // container div — so googleButtonRef points at a stale, unmounted node once "Back to
+  // login" restores the form; this reruns the render call against the fresh node.
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
+    if (!GOOGLE_CLIENT_ID || blockedScreen !== null) return;
 
     function renderButton() {
       window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
@@ -69,14 +74,20 @@ export default function LoginPage() {
       renderButton();
       return;
     }
+
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", renderButton, { once: true });
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.onload = renderButton;
     document.body.appendChild(script);
-    return () => document.body.removeChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [blockedScreen]);
 
   if (blockedScreen === "pending") {
     return (
