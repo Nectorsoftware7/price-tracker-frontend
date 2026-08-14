@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
+import { useAuth } from "../features/auth/AuthContext.jsx";
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role } = useAuth();
 
   function closeSidebar() {
     setSidebarOpen(false);
@@ -17,9 +19,11 @@ export default function MainLayout() {
 
       <aside className="sidebar">
         <nav>
-          <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
-            Products
-          </NavLink>
+          {role !== "superadmin" && (
+            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
+              Products
+            </NavLink>
+          )}
           <NavLink to="/price-stock" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Price &amp; Stock
           </NavLink>

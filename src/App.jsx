@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import SuperadminRedirect from "./routes/SuperadminRedirect.jsx";
 import LoginPage from "./features/auth/LoginPage.jsx";
 import Products from "./pages/Products.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
@@ -28,10 +29,24 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Products />} />
+        <Route
+          index
+          element={
+            <SuperadminRedirect>
+              <Products />
+            </SuperadminRedirect>
+          }
+        />
         <Route path="price-stock" element={<PriceStockVariation />} />
         <Route path="price-analytics" element={<PriceAnalytics />} />
-        <Route path="products/:id" element={<ProductDetail />} />
+        <Route
+          path="products/:id"
+          element={
+            <SuperadminRedirect>
+              <ProductDetail />
+            </SuperadminRedirect>
+          }
+        />
         <Route path="reviews" element={<Reviews />} />
       </Route>
     </Routes>
