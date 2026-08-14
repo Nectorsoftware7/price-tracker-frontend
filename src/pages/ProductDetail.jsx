@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
@@ -7,20 +8,16 @@ import Loader from "../components/Loader.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const [history, setHistory] = useState(null);
-  const [events, setEvents] = useState([]);
   const [days, setDays] = useState(7);
 
-  async function load() {
-    const [h, e] = await Promise.all([api.getHistory(id, days), api.getStockEvents(id)]);
-    setHistory(h);
-    setEvents(e);
-  }
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, days]);
+  const { data: history = null } = useQuery({
+    queryKey: ["history", id, days],
+    queryFn: () => api.getHistory(id, days),
+  });
+  const { data: events = [] } = useQuery({
+    queryKey: ["stockEvents", id],
+    queryFn: () => api.getStockEvents(id),
+  });
 
   if (!history) return <Loader />;
 

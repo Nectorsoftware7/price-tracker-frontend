@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
 
@@ -101,28 +102,17 @@ function ConversationCard({ submission, onReplySent }) {
 }
 
 export default function Reviews() {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+  const { data: submissions = [], isLoading: loading, error } = useQuery({
+    queryKey: ["contactSubmissions"],
+    queryFn: api.getContactSubmissions,
+  });
   const [tab, setTab] = useState("shopify");
 
-  async function load() {
-    setLoading(true);
-    try {
-      setSubmissions(await api.getContactSubmissions());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
   function handleReplySent(updated) {
-    setSubmissions((prev) => prev.map((s) => (s._id === updated._id ? { ...s, ...updated } : s)));
+    queryClient.setQueryData(["contactSubmissions"], (prev = []) =>
+      prev.map((s) => (s._id === updated._id ? { ...s, ...updated } : s))
+    );
   }
 
   const filtered = submissions.filter((s) => s.platform === tab);
@@ -142,7 +132,7 @@ export default function Reviews() {
         ))}
       </div>
 
-      {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
+      {error && <div className="card" style={{ color: "#a71d1d" }}>{error.message}</div>}
 
       {loading ? (
         <Loader />
