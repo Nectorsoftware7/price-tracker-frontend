@@ -216,7 +216,17 @@ export default function Products() {
 
       <div className="card" ref={formCardRef}>
         <h3 style={{ marginTop: 0 }}>{editingId ? "Edit product" : "Add product"}</h3>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          // Pressing Enter in any text field (e.g. mid-edit, or an autocomplete
+          // suggestion) submits the form by default HTML behavior — since the save
+          // itself is fast, this silently saved+reset the form before the edit was
+          // finished, which read as "the form randomly kicks me out" with no obvious
+          // cause. Only the actual submit button should trigger a save.
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") e.preventDefault();
+          }}
+        >
           <div className="form-row">
             <input
               placeholder="Product name"
