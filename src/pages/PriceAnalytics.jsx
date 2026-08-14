@@ -10,6 +10,7 @@ export default function PriceAnalytics() {
   const [events, setEvents] = useState([]);
   const [days, setDays] = useState(7);
   const [loading, setLoading] = useState(true);
+  const [stockFilter, setStockFilter] = useState("all");
 
   useEffect(() => {
     api.getProducts().then((list) => {
@@ -30,11 +31,24 @@ export default function PriceAnalytics() {
   if (loading) return <p>Loading...</p>;
   if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;
 
+  const filteredProducts = products.filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter);
   const selected = products.find((p) => p._id === productId);
   const chartData = (history?.points || []).map((p) => ({
     time: new Date(p.checkedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
     price: p.price,
   }));
+
+  function handleStockFilterChange(value) {
+    setStockFilter(value);
+    // If the currently-selected product doesn't match the new filter, fall back to
+    // the first product that does (or clear the selection if none match) — otherwise
+    // the dropdown would keep showing a product that's no longer in its own list.
+    const stillMatches = value === "all" || (selected?.lastStock || "unknown") === value;
+    if (!stillMatches) {
+      const next = products.find((p) => (p.lastStock || "unknown") === value);
+      setProductId(next ? next._id : null);
+    }
+  }
 
   return (
     <div>
@@ -42,17 +56,30 @@ export default function PriceAnalytics() {
       <p style={{ color: "#4c6b8a", marginTop: -8 }}>Pick any tracked product to see its price history and stock timeline.</p>
 
       <div className="card">
+        <div className="form-row">
+          <select value={stockFilter} onChange={(e) => handleStockFilterChange(e.target.value)}>
+            <option value="all">All stock statuses</option>
+            <option value="in_stock">In stock</option>
+            <option value="low_stock">Low stock</option>
+            <option value="out_of_stock">Out of stock</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+        {filteredProducts.length === 0 ? (
+          <p style={{ color: "#4c6b8a" }}>No products match this stock status.</p>
+        ) : (
         <select
-          value={productId}
+          value={productId ?? ""}
           onChange={(e) => setProductId(Number(e.target.value))}
           style={{ width: "100%", maxWidth: 480 }}
         >
-          {products.map((p) => (
+          {filteredProducts.map((p) => (
             <option key={p._id} value={p._id}>
               {p.name} ({p.site})
             </option>
           ))}
         </select>
+        )}
         {selected && (
           <div style={{ marginTop: 12, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <span>Current: <strong>₹{selected.lastPrice ?? "—"}</strong></span>
