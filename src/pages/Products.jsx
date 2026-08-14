@@ -24,6 +24,7 @@ export default function Products() {
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [stockFilter, setStockFilter] = useState("all");
   const formCardRef = useRef(null);
 
   function flashSuccess(message) {
@@ -331,7 +332,14 @@ export default function Products() {
           <p>No products tracked yet — add one above.</p>
         ) : (
           <>
-            <div className="form-row" style={{ justifyContent: "flex-end" }}>
+            <div className="form-row" style={{ justifyContent: "space-between" }}>
+              <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
+                <option value="all">All stock statuses</option>
+                <option value="in_stock">In stock</option>
+                <option value="low_stock">Low stock</option>
+                <option value="out_of_stock">Out of stock</option>
+                <option value="unknown">Unknown</option>
+              </select>
               <button className="btn" disabled={checkingAll} onClick={handleCheckAll}>
                 {checkingAll ? "Checking all products..." : "Check all products"}
               </button>
@@ -348,7 +356,9 @@ export default function Products() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {products
+                .filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter)
+                .map((p) => (
                 <tr key={p._id}>
                   <td><Link to={`/products/${p._id}`}>{p.name}</Link></td>
                   <td>{p.site}</td>
