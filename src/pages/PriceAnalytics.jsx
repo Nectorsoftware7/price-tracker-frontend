@@ -4,6 +4,8 @@ import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
 
+const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
+
 export default function PriceAnalytics() {
   const [products, setProducts] = useState([]);
   const [productId, setProductId] = useState(null);
@@ -12,6 +14,7 @@ export default function PriceAnalytics() {
   const [days, setDays] = useState(7);
   const [loading, setLoading] = useState(true);
   const [stockFilter, setStockFilter] = useState("all");
+  const [siteFilter, setSiteFilter] = useState("all");
 
   useEffect(() => {
     api.getProducts().then((list) => {
@@ -32,21 +35,25 @@ export default function PriceAnalytics() {
   if (loading) return <Loader />;
   if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;
 
-  const filteredProducts = products.filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter);
+  function matchesFilters(p, stock, site) {
+    return (stock === "all" || (p.lastStock || "unknown") === stock) && (site === "all" || p.site === site);
+  }
+
+  const filteredProducts = products.filter((p) => matchesFilters(p, stockFilter, siteFilter));
   const selected = products.find((p) => p._id === productId);
   const chartData = (history?.points || []).map((p) => ({
     time: new Date(p.checkedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
     price: p.price,
   }));
 
-  function handleStockFilterChange(value) {
-    setStockFilter(value);
-    // If the currently-selected product doesn't match the new filter, fall back to
-    // the first product that does (or clear the selection if none match) — otherwise
-    // the dropdown would keep showing a product that's no longer in its own list.
-    const stillMatches = value === "all" || (selected?.lastStock || "unknown") === value;
-    if (!stillMatches) {
-      const next = products.find((p) => (p.lastStock || "unknown") === value);
+  // If the currently-selected product doesn't match the new filter combo, fall back
+  // to the first product that does (or clear the selection if none match) — otherwise
+  // the dropdown would keep showing a product that's no longer in its own list.
+  function applyFilterChange(nextStock, nextSite) {
+    setStockFilter(nextStock);
+    setSiteFilter(nextSite);
+    if (!selected || !matchesFilters(selected, nextStock, nextSite)) {
+      const next = products.find((p) => matchesFilters(p, nextStock, nextSite));
       setProductId(next ? next._id : null);
     }
   }
@@ -58,12 +65,20 @@ export default function PriceAnalytics() {
 
       <div className="card">
         <div className="form-row">
-          <select value={stockFilter} onChange={(e) => handleStockFilterChange(e.target.value)}>
+          <select value={stockFilter} onChange={(e) => applyFilterChange(e.target.value, siteFilter)}>
             <option value="all">All stock statuses</option>
             <option value="in_stock">In stock</option>
             <option value="low_stock">Low stock</option>
             <option value="out_of_stock">Out of stock</option>
             <option value="unknown">Unknown</option>
+          </select>
+          <select value={siteFilter} onChange={(e) => applyFilterChange(stockFilter, e.target.value)}>
+            <option value="all">All sites</option>
+            {SITE_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </div>
         {filteredProducts.length === 0 ? (

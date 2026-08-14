@@ -5,6 +5,7 @@ import Loader from "../components/Loader.jsx";
 
 const FLAGGED_STATUSES = ["out_of_stock", "low_stock"];
 const NAME_MAX_LENGTH = 42;
+const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
 // Shopify URLs are stored as the .js/.json scraping endpoint, not the human-readable
 // page — strip that suffix so links open the actual storefront product page.
@@ -36,6 +37,7 @@ export default function PriceStockVariation() {
   const [sortDir, setSortDir] = useState("desc"); // "desc" = high to low, "asc" = low to high
   const [fromDate, setFromDate] = useState(""); // empty = default "last 24h" mode
   const [toDate, setToDate] = useState("");
+  const [siteFilter, setSiteFilter] = useState("all");
 
   const useCustomRange = Boolean(fromDate && toDate);
 
@@ -83,17 +85,23 @@ export default function PriceStockVariation() {
     setToDate("");
   }
 
-  const flagged = useMemo(() => products.filter((p) => FLAGGED_STATUSES.includes(p.lastStock)), [products]);
+  const bySite = (p) => siteFilter === "all" || p.site === siteFilter;
+
+  const flagged = useMemo(
+    () => products.filter((p) => FLAGGED_STATUSES.includes(p.lastStock) && bySite(p)),
+    [products, siteFilter]
+  );
 
   // Only products with an actual price swing in the window (min != max) — a flat price isn't a "variation".
   const varied = useMemo(() => {
     const withVariation = products
+      .filter(bySite)
       .map((p) => ({ product: p, stats: rangeStats[p._id] }))
       .filter(({ stats }) => stats && stats.min !== stats.max);
     return withVariation.sort((a, b) =>
       sortDir === "asc" ? a.product.lastPrice - b.product.lastPrice : b.product.lastPrice - a.product.lastPrice
     );
-  }, [products, rangeStats, sortDir]);
+  }, [products, rangeStats, sortDir, siteFilter]);
 
   if (loading) return <Loader />;
 
@@ -101,6 +109,19 @@ export default function PriceStockVariation() {
     <div>
       <h2>Price &amp; Stock variation</h2>
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
+
+      <div className="card">
+        <div className="form-row">
+          <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)}>
+            <option value="all">All sites</option>
+            {SITE_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>

@@ -9,6 +9,7 @@ import Loader from "../components/Loader.jsx";
 // built-in fallback selector on the server for sites like JioMart that need one) —
 // the form only ever needs a name, site, and URL.
 const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
+const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -26,6 +27,7 @@ export default function Products() {
   const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [stockFilter, setStockFilter] = useState("all");
+  const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
 
   function flashSuccess(message) {
@@ -334,13 +336,23 @@ export default function Products() {
         ) : (
           <>
             <div className="form-row" style={{ justifyContent: "space-between" }}>
-              <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
-                <option value="all">All stock statuses</option>
-                <option value="in_stock">In stock</option>
-                <option value="low_stock">Low stock</option>
-                <option value="out_of_stock">Out of stock</option>
-                <option value="unknown">Unknown</option>
-              </select>
+              <div className="form-row">
+                <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
+                  <option value="all">All stock statuses</option>
+                  <option value="in_stock">In stock</option>
+                  <option value="low_stock">Low stock</option>
+                  <option value="out_of_stock">Out of stock</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+                <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)}>
+                  <option value="all">All sites</option>
+                  {SITE_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button className="btn" disabled={checkingAll} onClick={handleCheckAll}>
                 {checkingAll ? "Checking all products..." : "Check all products"}
               </button>
@@ -375,6 +387,7 @@ export default function Products() {
             <tbody>
               {products
                 .filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter)
+                .filter((p) => siteFilter === "all" || p.site === siteFilter)
                 .map((p) => (
                 <tr key={p._id}>
                   <td><Link to={`/products/${p._id}`} title={p.name}>{p.name}</Link></td>
