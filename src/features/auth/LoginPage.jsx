@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext.jsx";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const PENDING_REVIEW = "ACCOUNT_PENDING_REVIEW";
+const ACCOUNT_SUSPENDED = "ACCOUNT_SUSPENDED";
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -11,13 +12,18 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const [pendingReview, setPendingReview] = useState(false);
+  // null | "pending" | "suspended" — a dedicated clean screen instead of the raw
+  // server error text for these two specific, expected-to-happen states.
+  const [blockedScreen, setBlockedScreen] = useState(null);
   const [busy, setBusy] = useState(false);
   const googleButtonRef = useRef(null);
 
   function handleAuthError(err) {
     if (err.message === PENDING_REVIEW) {
-      setPendingReview(true);
+      setBlockedScreen("pending");
+      setError(null);
+    } else if (err.message === ACCOUNT_SUSPENDED) {
+      setBlockedScreen("suspended");
       setError(null);
     } else {
       setError(err.message);
@@ -72,7 +78,7 @@ export default function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (pendingReview) {
+  if (blockedScreen === "pending") {
     return (
       <div className="card" style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
@@ -80,7 +86,20 @@ export default function LoginPage() {
         <p style={{ color: "#4c6b8a" }}>
           A superadmin needs to approve dashboard access for your account before you can log in. Try again once you've been notified.
         </p>
-        <button className="btn secondary" style={{ width: "100%" }} onClick={() => setPendingReview(false)}>
+        <button className="btn secondary" style={{ width: "100%" }} onClick={() => setBlockedScreen(null)}>
+          Back to login
+        </button>
+      </div>
+    );
+  }
+
+  if (blockedScreen === "suspended") {
+    return (
+      <div className="card" style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>🚫</div>
+        <h2 style={{ marginTop: 0 }}>Your account is suspended</h2>
+        <p style={{ color: "#4c6b8a" }}>Please contact the superadmin to have dashboard access restored.</p>
+        <button className="btn secondary" style={{ width: "100%" }} onClick={() => setBlockedScreen(null)}>
           Back to login
         </button>
       </div>

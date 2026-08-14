@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
 
+const ROLE_LABELS = { admin: "E-commerce Executive", superadmin: "Superadmin" };
+
 function ApproveRow({ user, onApprove }) {
   const [role, setRole] = useState("admin");
   const [busy, setBusy] = useState(false);
@@ -35,12 +37,48 @@ function ApproveRow({ user, onApprove }) {
   );
 }
 
+function ApprovedRow({ user, onToggleActive }) {
+  const [busy, setBusy] = useState(false);
+
+  async function handleToggle() {
+    setBusy(true);
+    try {
+      await onToggleActive(user._id, !user.active);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <tr>
+      <td>{user.username}</td>
+      <td>{ROLE_LABELS[user.role] || user.role}</td>
+      <td>{new Date(user.createdAt).toLocaleString()}</td>
+      <td>
+        <span className={`badge ${user.active ? "in_stock" : "out_of_stock"}`}>
+          {user.active ? "Active" : "Inactive"}
+        </span>
+      </td>
+      <td>
+        <button className={`btn ${user.active ? "danger" : ""}`} onClick={handleToggle} disabled={busy}>
+          {busy ? "..." : user.active ? "Deactivate" : "Activate"}
+        </button>
+      </td>
+    </tr>
+  );
+}
+
 export default function Users() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading: loading, error } = useQuery({ queryKey: ["users"], queryFn: api.getUsers });
 
   async function handleApprove(id, role) {
     await api.approveUser(id, role);
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+  }
+
+  async function handleToggleActive(id, active) {
+    await api.setUserActive(id, active);
     queryClient.invalidateQueries({ queryKey: ["users"] });
   }
 
@@ -95,23 +133,23 @@ export default function Users() {
           <table>
             <colgroup>
               <col style={{ width: 260 }} />
-              <col style={{ width: 150 }} />
+              <col style={{ width: 190 }} />
               <col style={{ width: 170 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 120 }} />
             </colgroup>
             <thead>
               <tr>
                 <th>Username</th>
                 <th>Role</th>
                 <th>Since</th>
+                <th>Status</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {approved.map((u) => (
-                <tr key={u._id}>
-                  <td>{u.username}</td>
-                  <td>{u.role}</td>
-                  <td>{new Date(u.createdAt).toLocaleString()}</td>
-                </tr>
+                <ApprovedRow key={u._id} user={u} onToggleActive={handleToggleActive} />
               ))}
             </tbody>
           </table>

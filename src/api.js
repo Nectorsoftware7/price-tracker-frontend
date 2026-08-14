@@ -53,4 +53,5 @@ export const api = {
 
   getUsers: () => request("/users"),
   approveUser: (id, role) => request(`/users/${id}/approve`, { method: "PUT", body: JSON.stringify({ role }) }),
+  setUserActive: (id, active) => request(`/users/${id}/active`, { method: "PUT", body: JSON.stringify({ active }) }),
 };
