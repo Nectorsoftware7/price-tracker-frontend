@@ -13,8 +13,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   // null | "pending" | "suspended" — a dedicated clean screen instead of the raw
-  // server error text for these two specific, expected-to-happen states.
-  const [blockedScreen, setBlockedScreen] = useState(null);
+  // server error text for these two specific, expected-to-happen states. Initialized
+  // from ?blocked= on the URL too: api.js redirects here with that param when an
+  // already-logged-in session's account gets deactivated/un-approved mid-use, so the
+  // reason is visible immediately instead of just landing back on a blank login form.
+  const [blockedScreen, setBlockedScreen] = useState(() => {
+    const reason = new URLSearchParams(window.location.search).get("blocked");
+    return reason === "suspended" || reason === "pending" ? reason : null;
+  });
   const [busy, setBusy] = useState(false);
   const googleButtonRef = useRef(null);
 

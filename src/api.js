@@ -13,12 +13,28 @@ async function request(path, options = {}) {
     },
     ...options,
   });
-  // A 401 on the login call itself just means "wrong credentials" — let it fall through
-  // to the normal error handling below instead of forcing a redirect loop back to /login.
-  if (res.status === 401 && path !== "/auth/login") {
+  // A 401/403 on the login calls themselves just means "wrong credentials" / "not yet
+  // approved" — let those fall through to the normal error handling below so the login
+  // page's own catch block can show its dedicated screens, instead of this redirecting
+  // out from under it.
+  const isAuthEndpoint = path === "/auth/login" || path === "/auth/google";
+  if (res.status === 401 && !isAuthEndpoint) {
     localStorage.removeItem("token");
     window.location.assign("/login");
     throw new Error("Session expired — please log in again");
+  }
+  if (res.status === 403 && !isAuthEndpoint) {
+    const body = await res.json().catch(() => ({}));
+    // A superadmin can deactivate/un-approve an account while it's mid-session — this
+    // catches that on its very next request instead of waiting for the JWT to expire.
+    if (body.error === "ACCOUNT_SUSPENDED" || body.error === "ACCOUNT_PENDING_REVIEW") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      window.location.assign(`/login?blocked=${body.error === "ACCOUNT_SUSPENDED" ? "suspended" : "pending"}`);
+      throw new Error(body.error);
+    }
+    throw new Error(body.error || "Forbidden");
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
