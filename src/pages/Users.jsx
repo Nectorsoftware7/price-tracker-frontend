@@ -23,7 +23,7 @@ function ApproveRow({ user, onApprove }) {
       <td>
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="admin">E-commerce Executive</option>
-          <option value="superadmin">Superadmin (restricted)</option>
+          <option value="superadmin">Superadmin</option>
         </select>
       </td>
       <td>
