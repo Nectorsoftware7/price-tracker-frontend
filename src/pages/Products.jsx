@@ -360,7 +360,7 @@ export default function Products() {
                 .filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter)
                 .map((p) => (
                 <tr key={p._id}>
-                  <td><Link to={`/products/${p._id}`}>{p.name}</Link></td>
+                  <td><Link to={`/products/${p._id}`} title={p.name}>{p.name}</Link></td>
                   <td>{p.site}</td>
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>

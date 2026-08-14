@@ -147,11 +147,19 @@ a { color: var(--blue-900); }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; background: var(--blue-50); }
-/* The Name column holds long product titles and should wrap; every other column
-   (Site, Last price, Stock, Last checked, action buttons) is short content that
-   should never wrap — a squeezed Stock column was breaking "Out of stock" onto two
-   lines once Name ate most of the available width. */
-th:first-child, td:first-child { width: 40%; word-break: break-word; }
+/* Product titles run long (some 100+ characters) — truncating to one line with an
+   ellipsis (full title still available via the link's title tooltip and its own
+   detail page) keeps every row a predictable height instead of some rows being 5
+   lines tall. Every other column gets an explicit width instead of table-layout's
+   even default split, which wasn't enough room for the "Last checked" timestamp and
+   let it visually run into the action buttons next to it. */
+th:first-child, td:first-child { width: 26%; }
+td:first-child a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+th:nth-child(2), td:nth-child(2) { width: 8%; }
+th:nth-child(3), td:nth-child(3) { width: 9%; }
+th:nth-child(4), td:nth-child(4) { width: 11%; }
+th:nth-child(5), td:nth-child(5) { width: 14%; }
+th:last-child, td:last-child { width: 32%; }
 th:not(:first-child), td:not(:first-child) { white-space: nowrap; }
 
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; display: inline-block; }
