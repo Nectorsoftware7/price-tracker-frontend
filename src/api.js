@@ -50,4 +50,7 @@ export const api = {
 
   getContactSubmissions: () => request("/contact-form"),
   sendManualReply: (id, message) => request(`/contact-form/${id}/reply`, { method: "POST", body: JSON.stringify({ message }) }),
+
+  getUsers: () => request("/users"),
+  approveUser: (id, role) => request(`/users/${id}/approve`, { method: "PUT", body: JSON.stringify({ role }) }),
 };

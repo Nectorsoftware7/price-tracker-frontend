@@ -33,6 +33,11 @@ export default function MainLayout() {
           <NavLink to="/reviews" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Contact Form
           </NavLink>
+          {role === "superadmin" && (
+            <NavLink to="/users" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
+              Users
+            </NavLink>
+          )}
         </nav>
       </aside>
       <main className="main">

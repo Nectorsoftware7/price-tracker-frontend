@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const PENDING_REVIEW = "ACCOUNT_PENDING_REVIEW";
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -10,8 +11,18 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [pendingReview, setPendingReview] = useState(false);
   const [busy, setBusy] = useState(false);
   const googleButtonRef = useRef(null);
+
+  function handleAuthError(err) {
+    if (err.message === PENDING_REVIEW) {
+      setPendingReview(true);
+      setError(null);
+    } else {
+      setError(err.message);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,7 +32,7 @@ export default function LoginPage() {
       await login(username, password);
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      handleAuthError(err);
     } finally {
       setBusy(false);
     }
@@ -33,7 +44,7 @@ export default function LoginPage() {
       await loginWithGoogle(response.credential);
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      handleAuthError(err);
     }
   }
 
@@ -60,6 +71,21 @@ export default function LoginPage() {
     return () => document.body.removeChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (pendingReview) {
+    return (
+      <div className="card" style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+        <h2 style={{ marginTop: 0 }}>Your account is under review</h2>
+        <p style={{ color: "#4c6b8a" }}>
+          A superadmin needs to approve dashboard access for your account before you can log in. Try again once you've been notified.
+        </p>
+        <button className="btn secondary" style={{ width: "100%" }} onClick={() => setPendingReview(false)}>
+          Back to login
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="card" style={{ maxWidth: 360, margin: "80px auto" }}>

@@ -3,12 +3,14 @@ import MainLayout from "./layouts/MainLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import SuperadminRedirect from "./routes/SuperadminRedirect.jsx";
+import RequireSuperadmin from "./routes/RequireSuperadmin.jsx";
 import LoginPage from "./features/auth/LoginPage.jsx";
 import Products from "./pages/Products.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
 import Reviews from "./pages/Reviews.jsx";
 import PriceStockVariation from "./pages/PriceStockVariation.jsx";
 import PriceAnalytics from "./pages/PriceAnalytics.jsx";
+import Users from "./pages/Users.jsx";
 
 export default function App() {
   return (
@@ -48,6 +50,14 @@ export default function App() {
           }
         />
         <Route path="reviews" element={<Reviews />} />
+        <Route
+          path="users"
+          element={
+            <RequireSuperadmin>
+              <Users />
+            </RequireSuperadmin>
+          }
+        />
       </Route>
     </Routes>
   );
