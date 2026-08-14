@@ -346,6 +346,21 @@ export default function Products() {
             </div>
             <div className="table-scroll">
             <table>
+            {/* Explicit per-column pixel widths (rather than CSS percentages) guarantee
+                the header row and body rows always line up exactly — a <colgroup> is
+                the one thing table-layout:fixed treats as authoritative for column
+                sizing, so there's no room for header/body to drift apart. The actions
+                column is wide enough for all 3 buttons (Check now/Edit/Delete) side by
+                side without their text clipping, which % widths weren't guaranteeing
+                on narrow/mobile viewports even inside the horizontal-scroll wrapper. */}
+            <colgroup>
+              <col style={{ width: 220 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 150 }} />
+              <col style={{ width: 280 }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Name</th>
