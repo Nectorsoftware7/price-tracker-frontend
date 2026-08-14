@@ -129,7 +129,13 @@ export default function PriceAnalytics() {
         {events.length === 0 ? (
           <p>No stock events yet.</p>
         ) : (
+          <div className="table-scroll">
           <table>
+            <colgroup>
+              <col style={{ width: 110 }} />
+              <col style={{ width: 260 }} />
+              <col style={{ width: 150 }} />
+            </colgroup>
             <thead><tr><th>Status</th><th>Detail</th><th>When</th></tr></thead>
             <tbody>
               {events.map((e) => (
@@ -141,6 +147,7 @@ export default function PriceAnalytics() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

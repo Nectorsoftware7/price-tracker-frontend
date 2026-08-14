@@ -156,9 +156,13 @@ a { color: var(--blue-900); }
    fixed treats as authoritative, guaranteeing header/body columns always line up) —
    on a narrow/mobile viewport there isn't room for all of them, so this wrapper
    scrolls horizontally instead of squeezing every column's text together illegibly.
-   min-width matches the colgroup's column widths summed. */
+   No table-wide min-width here — that's set per-table below, sized to that table's
+   own colgroup sum. A single shared min-width forced every table (even ones with far
+   fewer/narrower columns, like Flagged or Stock history) to stretch wider than their
+   content needed, which is what spread Product/Site/etc. so far apart. */
 .table-scroll { overflow-x: auto; }
-table { width: 100%; min-width: 910px; border-collapse: collapse; table-layout: fixed; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.table-products { min-width: 910px; } /* sum of its colgroup: 220+80+80+100+150+280 */
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; background: var(--blue-50); }
 /* Product titles run long (some 100+ characters) — truncating to one line with an

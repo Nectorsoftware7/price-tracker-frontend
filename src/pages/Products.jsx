@@ -346,7 +346,7 @@ export default function Products() {
               </button>
             </div>
             <div className="table-scroll">
-            <table>
+            <table className="table-products">
             {/* Explicit per-column pixel widths (rather than CSS percentages) guarantee
                 the header row and body rows always line up exactly — a <colgroup> is
                 the one thing table-layout:fixed treats as authoritative for column

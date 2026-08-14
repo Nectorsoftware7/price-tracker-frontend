@@ -107,7 +107,18 @@ export default function PriceStockVariation() {
         {flagged.length === 0 ? (
           <p style={{ color: "#4c6b8a" }}>Nothing flagged right now — everything tracked is in stock.</p>
         ) : (
+          <div className="table-scroll">
           <table>
+            {/* Fixed, tight column widths instead of the browser's default table-layout,
+                which stretches columns to fill the container evenly regardless of how
+                little content Site/Price/Stock actually need — that read as a huge,
+                uneven gap between Product and Site especially on mobile. */}
+            <colgroup>
+              <col style={{ width: 240 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 110 }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Product</th>
@@ -127,6 +138,7 @@ export default function PriceStockVariation() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -164,7 +176,17 @@ export default function PriceStockVariation() {
             No price has moved {useCustomRange ? "in the selected date range" : "in the last 24 hours"}.
           </p>
         ) : (
+          <div className="table-scroll">
           <table style={{ marginTop: 12 }}>
+            <colgroup>
+              <col style={{ width: 220 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 110 }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Product</th>
@@ -190,6 +212,7 @@ export default function PriceStockVariation() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
