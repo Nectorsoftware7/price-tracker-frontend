@@ -22,7 +22,7 @@ function ApproveRow({ user, onApprove }) {
       <td>{new Date(user.createdAt).toLocaleString()}</td>
       <td>
         <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="admin">Admin (full access)</option>
+          <option value="admin">E-commerce Executive</option>
           <option value="superadmin">Superadmin (restricted)</option>
         </select>
       </td>
