@@ -368,7 +368,7 @@ export default function Products() {
                 <th>Last price</th>
                 <th>Stock</th>
                 <th>Last checked</th>
-                <th></th>
+                <th style={{ textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -381,7 +381,7 @@ export default function Products() {
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>
-                  <td style={{ display: "flex", gap: 8 }}>
+                  <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
                     <button className="btn secondary" disabled={busyId === p._id} onClick={() => handleCheckNow(p._id)}>
                       {busyId === p._id ? "Checking..." : "Check now"}
                     </button>
