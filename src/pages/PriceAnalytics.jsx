@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
@@ -7,30 +8,27 @@ import Loader from "../components/Loader.jsx";
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
 export default function PriceAnalytics() {
-  const [products, setProducts] = useState([]);
   const [productId, setProductId] = useState(null);
-  const [history, setHistory] = useState(null);
-  const [events, setEvents] = useState([]);
   const [days, setDays] = useState(7);
-  const [loading, setLoading] = useState(true);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
 
-  useEffect(() => {
-    api.getProducts().then((list) => {
-      setProducts(list);
-      if (list.length > 0) setProductId(list[0]._id);
-      setLoading(false);
-    });
-  }, []);
+  const { data: products = [], isLoading: loading } = useQuery({ queryKey: ["products"], queryFn: api.getProducts });
 
   useEffect(() => {
-    if (!productId) return;
-    Promise.all([api.getHistory(productId, days), api.getStockEvents(productId)]).then(([h, e]) => {
-      setHistory(h);
-      setEvents(e);
-    });
-  }, [productId, days]);
+    if (!productId && products.length > 0) setProductId(products[0]._id);
+  }, [products, productId]);
+
+  const { data: history = null } = useQuery({
+    queryKey: ["history", productId, days],
+    queryFn: () => api.getHistory(productId, days),
+    enabled: Boolean(productId),
+  });
+  const { data: events = [] } = useQuery({
+    queryKey: ["stockEvents", productId],
+    queryFn: () => api.getStockEvents(productId),
+    enabled: Boolean(productId),
+  });
 
   if (loading) return <Loader />;
   if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;

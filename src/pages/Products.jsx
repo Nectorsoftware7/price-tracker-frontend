@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
@@ -12,10 +13,16 @@ const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
+  const queryClient = useQueryClient();
+  // staleTime here (set globally in main.jsx) means revisiting this page shows
+  // whatever was cached from last time instantly — no loading spinner — while quietly
+  // refetching in the background if it's gone stale. invalidate() below (after any
+  // mutation) forces an immediate refetch regardless of staleness.
+  const { data: products = [], isLoading: loading } = useQuery({ queryKey: ["products"], queryFn: api.getProducts });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
+
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [adding, setAdding] = useState(false);
@@ -35,21 +42,6 @@ export default function Products() {
     setTimeout(() => setSuccessMessage((current) => (current === message ? null : current)), 4000);
   }
 
-  async function load() {
-    setLoading(true);
-    try {
-      setProducts(await api.getProducts());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
   async function handleSubmit(e) {
     e.preventDefault();
     const wasEditing = Boolean(editingId);
@@ -64,11 +56,11 @@ export default function Products() {
       // right away instead of leaving the user staring at "Saving..." for however
       // long the price/stock check takes (a JioMart check via ScraperAPI alone can
       // take 60-100s+). The check-now below fills in price/stock in the background;
-      // its own load() afterward updates that once it's ready.
+      // its own invalidate() afterward updates that once it's ready.
       flashSuccess(wasEditing ? "✅ Product updated" : "✅ Product added");
-      load();
+      invalidate();
       await api.checkNow(product._id);
-      load();
+      invalidate();
     } catch (err) {
       setError(err.message);
       setAdding(false);
@@ -94,14 +86,14 @@ export default function Products() {
   async function handleDelete(id) {
     if (!confirm("Remove this product from tracking?")) return;
     await api.deleteProduct(id);
-    load();
+    invalidate();
   }
 
   async function handleCheckNow(id) {
     setBusyId(id);
     try {
       await api.checkNow(id);
-      await load();
+      await invalidate();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -178,7 +170,7 @@ export default function Products() {
       setError(err.message);
     } finally {
       setBulkImporting(false);
-      load();
+      invalidate();
     }
 
     // Bulk-created products otherwise sit at "Unknown"/"never" until the next hourly
@@ -193,7 +185,7 @@ export default function Products() {
         } catch {
           // A single product's check failing shouldn't stop the rest from being tried.
         }
-        load();
+        invalidate();
       }
       setBulkCheckProgress(null);
     }
@@ -204,7 +196,7 @@ export default function Products() {
     setError(null);
     try {
       await api.checkAll();
-      await load();
+      await invalidate();
     } catch (err) {
       setError(err.message);
     } finally {

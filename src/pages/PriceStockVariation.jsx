@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
@@ -30,10 +31,6 @@ function todayStr() {
 }
 
 export default function PriceStockVariation() {
-  const [products, setProducts] = useState([]);
-  const [rangeStats, setRangeStats] = useState({}); // productId -> {min, max, avg, samples}
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [sortDir, setSortDir] = useState("desc"); // "desc" = high to low, "asc" = low to high
   const [fromDate, setFromDate] = useState(""); // empty = default "last 24h" mode
   const [toDate, setToDate] = useState("");
@@ -41,44 +38,26 @@ export default function PriceStockVariation() {
 
   const useCustomRange = Boolean(fromDate && toDate);
 
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
+    queryKey: ["products"],
+    queryFn: api.getProducts,
+  });
+
   // A single bulk call for every product's stats in the window, instead of one
   // /history request per product — that used to mean 139 concurrent requests on the
   // full list, which could overwhelm the free-tier backend instance and made this
   // page look permanently stuck on "Loading..." (worse each time it was revisited,
-  // since the previous batch's in-flight requests were never cancelled).
-  async function load() {
-    try {
-      const stats = useCustomRange
-        ? await api.getAllStats(`${fromDate}T00:00:00`, `${toDate}T23:59:59`)
-        : await api.getAllStats();
-      setRangeStats(stats);
-    } catch (err) {
-      setError(err.message);
-    }
-  }
+  // since the previous batch's in-flight requests were never cancelled). Keyed on the
+  // date range so switching ranges fetches fresh stats but flipping back to a range
+  // already seen this session shows it instantly from cache.
+  const { data: rangeStats = {}, error: statsError } = useQuery({
+    queryKey: useCustomRange ? ["stats", fromDate, toDate] : ["stats", "last24h"],
+    queryFn: () =>
+      useCustomRange ? api.getAllStats(`${fromDate}T00:00:00`, `${toDate}T23:59:59`) : api.getAllStats(),
+  });
 
-  async function loadAll() {
-    setLoading(true);
-    try {
-      const list = await api.getProducts();
-      setProducts(list);
-      await load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (products.length > 0) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromDate, toDate]);
+  const loading = productsLoading;
+  const error = productsError?.message || statsError?.message || null;
 
   function clearRange() {
     setFromDate("");
