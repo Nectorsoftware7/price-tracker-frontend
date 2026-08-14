@@ -31,6 +31,7 @@ async function request(path, options = {}) {
 export const api = {
   login: (username, password) =>
     request("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) }),
+  googleLogin: (credential) => request("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
 
   getProducts: () => request("/products"),
   createProduct: (data) => request("/products", { method: "POST", body: JSON.stringify(data) }),
