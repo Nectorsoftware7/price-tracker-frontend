@@ -3,10 +3,18 @@ import { api } from "../../api";
 
 const AuthContext = createContext(null);
 
+// A role logged in before the backend started sending one got saved as the literal
+// string "undefined" (localStorage.setItem stringifies its value) — treat that (and
+// "null") the same as no role at all instead of a real, unmatched role name.
+function readStoredRole() {
+  const stored = localStorage.getItem("role");
+  return stored && stored !== "undefined" && stored !== "null" ? stored : null;
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [username, setUsername] = useState(() => localStorage.getItem("username"));
-  const [role, setRole] = useState(() => localStorage.getItem("role"));
+  const [role, setRole] = useState(readStoredRole);
 
   async function login(usernameInput, password) {
     const { token: newToken, user } = await api.login(usernameInput, password);
