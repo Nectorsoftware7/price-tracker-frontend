@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
+import Loader from "../components/Loader.jsx";
 
 export default function PriceAnalytics() {
   const [products, setProducts] = useState([]);
@@ -28,7 +29,7 @@ export default function PriceAnalytics() {
     });
   }, [productId, days]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Loader />;
   if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;
 
   const filteredProducts = products.filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter);

@@ -299,3 +299,40 @@ input[type="date"] {
   .btn { width: 100%; }
   .form-row .btn { width: auto; }
 }
+
+/* Branded loading spinner — a spinning conic-gradient ring with a punched-out center
+   (so it reads as a ring, not a solid disc) and a soft drop shadow for a bit of depth,
+   replacing the plain "Loading..." text used everywhere in the app. */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 56px 0;
+}
+.loader-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--blue-500), var(--blue-900), var(--blue-200), var(--blue-500));
+  box-shadow: 0 6px 18px rgba(122, 0, 64, 0.25);
+  animation: loader-spin 0.9s linear infinite;
+  position: relative;
+}
+.loader-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--white);
+}
+.loader-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}

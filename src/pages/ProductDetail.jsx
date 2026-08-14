@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
+import Loader from "../components/Loader.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -21,7 +22,7 @@ export default function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, days]);
 
-  if (!history) return <p>Loading...</p>;
+  if (!history) return <Loader />;
 
   const chartData = history.points.map((p) => ({
     time: new Date(p.checkedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),

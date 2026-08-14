@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
+import Loader from "../components/Loader.jsx";
 
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
@@ -327,7 +328,7 @@ export default function Products() {
 
       <div className="card">
         {loading ? (
-          <p>Loading...</p>
+          <Loader />
         ) : products.length === 0 ? (
           <p>No products tracked yet — add one above.</p>
         ) : (

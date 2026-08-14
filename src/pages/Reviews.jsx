@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import Loader from "../components/Loader.jsx";
 
 const TABS = [
   { key: "shopify", label: "Shopify" },
@@ -144,7 +145,7 @@ export default function Reviews() {
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
 
       {loading ? (
-        <p>Loading...</p>
+        <Loader />
       ) : filtered.length === 0 ? (
         <div className="card">
           <p style={{ color: "#4c6b8a", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>

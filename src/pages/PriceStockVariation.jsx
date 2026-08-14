@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
+import Loader from "../components/Loader.jsx";
 
 const FLAGGED_STATUSES = ["out_of_stock", "low_stock"];
 const NAME_MAX_LENGTH = 42;
@@ -94,7 +95,7 @@ export default function PriceStockVariation() {
     );
   }, [products, rangeStats, sortDir]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Loader />;
 
   return (
     <div>
