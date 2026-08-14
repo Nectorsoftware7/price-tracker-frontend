@@ -144,7 +144,15 @@ a { color: var(--blue-900); }
   box-shadow: 0 1px 3px rgba(122, 0, 64, 0.08);
 }
 
-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+/* The fixed per-column percentage widths below need real pixel room to make sense
+   (e.g. the actions column needs enough space for 3 buttons side by side) — on a
+   narrow/mobile viewport there just isn't that much width, and squeezing everything
+   in anyway is what was smashing every column's text together illegibly. Giving the
+   table a min-width and letting only this wrapper scroll horizontally keeps every
+   column readable at its natural size — the user scrolls sideways to see the rest,
+   same pattern as any data-heavy table on a small screen. */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; background: var(--blue-50); }
 /* Product titles run long (some 100+ characters) — truncating to one line with an

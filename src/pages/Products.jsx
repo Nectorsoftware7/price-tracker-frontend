@@ -344,6 +344,7 @@ export default function Products() {
                 {checkingAll ? "Checking all products..." : "Check all products"}
               </button>
             </div>
+            <div className="table-scroll">
             <table>
             <thead>
               <tr>
@@ -376,6 +377,7 @@ export default function Products() {
               ))}
             </tbody>
             </table>
+            </div>
           </>
         )}
       </div>
