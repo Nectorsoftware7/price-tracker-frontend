@@ -105,6 +105,22 @@ export default function Products() {
     }
   }
 
+  // Toggling active/inactive lets a permanently-dead listing (no seller left, will
+  // never sell again) be paused without losing its history the way Delete would —
+  // an inactive product is skipped by the hourly cron/"Check all products" and
+  // dropped from the Log/Flagged/Price Variation Sheets, but stays in the dashboard.
+  async function handleToggleActive(product) {
+    setBusyId(product._id);
+    try {
+      await api.updateProduct(product._id, { active: !product.active });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   // Converts a worksheet's raw rows (array-of-arrays, header included) into product
   // rows. Supports either 3 columns (Platform, Product Name, Link) or 4 (Platform,
   // Brand, Product Name, Link) — Brand is dropped either way, since the tracker has no
@@ -344,6 +360,7 @@ export default function Products() {
                 <th>Last price</th>
                 <th>Stock</th>
                 <th>Last checked</th>
+                <th>Status</th>
                 <th></th>
               </tr>
             </thead>
@@ -355,6 +372,20 @@ export default function Products() {
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>
+                  <td>
+                    <button
+                      className="btn secondary"
+                      disabled={busyId === p._id}
+                      onClick={() => handleToggleActive(p)}
+                      style={{
+                        color: p.active ? "#1a7f37" : "#a71d1d",
+                        borderColor: p.active ? "#1a7f37" : "#a71d1d",
+                      }}
+                      title={p.active ? "Click to mark inactive (pauses checks)" : "Click to mark active (resumes checks)"}
+                    >
+                      {p.active ? "Active" : "Inactive"}
+                    </button>
+                  </td>
                   <td style={{ display: "flex", gap: 8 }}>
                     <button className="btn secondary" disabled={busyId === p._id} onClick={() => handleCheckNow(p._id)}>
                       {busyId === p._id ? "Checking..." : "Check now"}
