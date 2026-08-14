@@ -39,6 +39,10 @@ export const api = {
   deleteProduct: (id) => request(`/products/${id}`, { method: "DELETE" }),
   getHistory: (id, days = 7) => request(`/products/${id}/history?days=${days}`),
   getHistoryRange: (id, from, to) => request(`/products/${id}/history?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+  // One request for every product's stats in a window, instead of one request per
+  // product — see PricePoint.statsForAllProducts on the server for why that mattered.
+  getAllStats: (from, to) =>
+    request(`/products/stats${from && to ? `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` : ""}`),
   getStockEvents: (id) => request(`/products/${id}/stock-events`),
   checkNow: (id) => request(`/products/${id}/check-now`, { method: "POST" }),
   checkAll: () => request("/products/check-all", { method: "POST" }),

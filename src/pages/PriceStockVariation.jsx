@@ -39,20 +39,20 @@ export default function PriceStockVariation() {
 
   const useCustomRange = Boolean(fromDate && toDate);
 
-  async function load(list) {
-    const entries = await Promise.all(
-      list.map(async (p) => {
-        try {
-          const history = useCustomRange
-            ? await api.getHistoryRange(p._id, `${fromDate}T00:00:00`, `${toDate}T23:59:59`)
-            : await api.getHistory(p._id, 1);
-          return [p._id, history.stats24h];
-        } catch {
-          return [p._id, null];
-        }
-      })
-    );
-    setRangeStats(Object.fromEntries(entries));
+  // A single bulk call for every product's stats in the window, instead of one
+  // /history request per product — that used to mean 139 concurrent requests on the
+  // full list, which could overwhelm the free-tier backend instance and made this
+  // page look permanently stuck on "Loading..." (worse each time it was revisited,
+  // since the previous batch's in-flight requests were never cancelled).
+  async function load() {
+    try {
+      const stats = useCustomRange
+        ? await api.getAllStats(`${fromDate}T00:00:00`, `${toDate}T23:59:59`)
+        : await api.getAllStats();
+      setRangeStats(stats);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function loadAll() {
@@ -60,7 +60,7 @@ export default function PriceStockVariation() {
     try {
       const list = await api.getProducts();
       setProducts(list);
-      await load(list);
+      await load();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -74,7 +74,7 @@ export default function PriceStockVariation() {
   }, []);
 
   useEffect(() => {
-    if (products.length > 0) load(products);
+    if (products.length > 0) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate]);
 
