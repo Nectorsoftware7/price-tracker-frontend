@@ -96,13 +96,13 @@ export default function Dashboard() {
         {siteCounts.length === 0 ? (
           <p style={{ color: "#4c6b8a" }}>No products tracked yet.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(240, siteCounts.length * 44)}>
-            <BarChart data={siteCounts} layout="vertical" margin={{ left: 8, right: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
-              <YAxis type="category" dataKey="site" width={90} tick={{ fontSize: 12, fill: "var(--text)" }} />
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={siteCounts} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="site" tick={{ fontSize: 12, fill: "var(--text)" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
               <Tooltip content={<CustomTooltip formatter={(v) => `${v} product${v === 1 ? "" : "s"}`} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
-              <Bar dataKey="count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={28} />
+              <Bar dataKey="count" fill={BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={56} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -114,13 +114,13 @@ export default function Dashboard() {
         {outOfStockBySite.length === 0 ? (
           <p style={{ color: "#4c6b8a" }}>Nothing out of stock — every tracked product is available.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(240, outOfStockBySite.length * 44)}>
-            <BarChart data={outOfStockBySite} layout="vertical" margin={{ left: 8, right: 24 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
-              <YAxis type="category" dataKey="site" width={90} tick={{ fontSize: 12, fill: "var(--text)" }} />
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={outOfStockBySite} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="site" tick={{ fontSize: 12, fill: "var(--text)" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
               <Tooltip content={<CustomTooltip formatter={(v) => `${v} out of stock`} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
-              <Bar dataKey="count" fill={PROBLEM_BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={28} />
+              <Bar dataKey="count" fill={PROBLEM_BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={56} />
             </BarChart>
           </ResponsiveContainer>
         )}
