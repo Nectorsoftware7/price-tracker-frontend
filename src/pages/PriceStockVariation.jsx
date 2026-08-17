@@ -8,6 +8,12 @@ const FLAGGED_STATUSES = ["out_of_stock", "low_stock"];
 const NAME_MAX_LENGTH = 42;
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
+const ACTIVITY_RANGES = [
+  { key: "24h", label: "24 hours", hours: 24 },
+  { key: "7d", label: "7 days", hours: 24 * 7 },
+  { key: "15d", label: "15 days", hours: 24 * 15 },
+];
+
 // Shopify URLs are stored as the .js/.json scraping endpoint, not the human-readable
 // page — strip that suffix so links open the actual storefront product page.
 function toDisplayUrl(url) {
@@ -34,15 +40,18 @@ function todayStr() {
 // feed of every stock-status change across all products, not just a current snapshot
 // (the Flagged table above only shows what's flagged *right now*, with no trace of
 // when it happened or what changed before it).
-function RecentStockChanges({ siteFilter }) {
+function RecentStockChanges({ siteFilter, activityCutoff }) {
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: ["stockEvents", "recent"],
     queryFn: api.getAllStockEvents,
   });
 
   const filtered = useMemo(
-    () => events.filter((e) => siteFilter === "all" || e.productSite === siteFilter),
-    [events, siteFilter]
+    () =>
+      events.filter(
+        (e) => (siteFilter === "all" || e.productSite === siteFilter) && new Date(e.checkedAt).getTime() >= activityCutoff
+      ),
+    [events, siteFilter, activityCutoff]
   );
 
   return (
@@ -100,8 +109,18 @@ export default function PriceStockVariation() {
   const [fromDate, setFromDate] = useState(""); // empty = default "last 24h" mode
   const [toDate, setToDate] = useState("");
   const [siteFilter, setSiteFilter] = useState("all");
+  const [activityRange, setActivityRange] = useState("24h"); // Flagged + Recent stock changes
 
   const useCustomRange = Boolean(fromDate && toDate);
+
+  // Recomputed only when the selected range changes, not on every render — Date.now()
+  // moves every millisecond, and re-deriving it on unrelated re-renders would produce a
+  // new cutoff value each time, defeating the point of a stable filter.
+  const activityCutoff = useMemo(() => {
+    const range = ACTIVITY_RANGES.find((r) => r.key === activityRange);
+    return Date.now() - range.hours * 60 * 60 * 1000;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activityRange]);
 
   const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ["products"],
@@ -132,8 +151,15 @@ export default function PriceStockVariation() {
   const bySite = (p) => siteFilter === "all" || p.site === siteFilter;
 
   const flagged = useMemo(
-    () => products.filter((p) => FLAGGED_STATUSES.includes(p.lastStock) && bySite(p)),
-    [products, siteFilter]
+    () =>
+      products.filter(
+        (p) =>
+          FLAGGED_STATUSES.includes(p.lastStock) &&
+          bySite(p) &&
+          p.lastCheckedAt &&
+          new Date(p.lastCheckedAt).getTime() >= activityCutoff
+      ),
+    [products, siteFilter, activityCutoff]
   );
 
   // Only products with an actual price swing in the window (min != max) — a flat price isn't a "variation".
@@ -155,7 +181,7 @@ export default function PriceStockVariation() {
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
 
       <div className="card">
-        <div className="form-row">
+        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)}>
             <option value="all">All sites</option>
             {SITE_OPTIONS.map((s) => (
@@ -164,13 +190,24 @@ export default function PriceStockVariation() {
               </option>
             ))}
           </select>
+          <div style={{ display: "flex", gap: 8 }}>
+            {ACTIVITY_RANGES.map((r) => (
+              <button
+                key={r.key}
+                className={`btn ${activityRange === r.key ? "" : "secondary"}`}
+                onClick={() => setActivityRange(r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
         {flagged.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>Nothing flagged right now — everything tracked is in stock.</p>
+          <p style={{ color: "#4c6b8a" }}>Nothing flagged in the last {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.</p>
         ) : (
           <div className="table-scroll">
           <table>
@@ -210,7 +247,7 @@ export default function PriceStockVariation() {
         )}
       </div>
 
-      <RecentStockChanges siteFilter={siteFilter} />
+      <RecentStockChanges siteFilter={siteFilter} activityCutoff={activityCutoff} />
 
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
