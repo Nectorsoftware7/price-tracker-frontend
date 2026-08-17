@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
@@ -7,13 +7,46 @@ import Loader from "../components/Loader.jsx";
 
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
+const VARIATION_RANGES = [
+  { key: "24h", label: "24 hours", hours: 24 },
+  { key: "7d", label: "7 days", hours: 24 * 7 },
+  { key: "15d", label: "15 days", hours: 24 * 15 },
+];
+
 export default function PriceAnalytics() {
   const [productId, setProductId] = useState(null);
   const [days, setDays] = useState(7);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
+  const [variationRange, setVariationRange] = useState("24h");
 
   const { data: products = [], isLoading: loading } = useQuery({ queryKey: ["products"], queryFn: api.getProducts });
+
+  // Recomputed only when the selected range changes (not on every render) so the query
+  // key stays stable and doesn't refetch just because some unrelated state changed.
+  const { from: variationFrom, to: variationTo } = useMemo(() => {
+    const range = VARIATION_RANGES.find((r) => r.key === variationRange);
+    const to = new Date();
+    const from = new Date(to.getTime() - range.hours * 60 * 60 * 1000);
+    return { from: from.toISOString(), to: to.toISOString() };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variationRange]);
+
+  const { data: variationStats = {} } = useQuery({
+    queryKey: ["stats", "analytics-variation", variationRange],
+    queryFn: () => api.getAllStats(variationFrom, variationTo),
+  });
+
+  // Only products whose price actually moved in the window (min !== max) — a flat
+  // price isn't a "variation" — sorted by how much it moved, biggest mover first.
+  const priceVariations = useMemo(
+    () =>
+      products
+        .map((p) => ({ product: p, stats: variationStats[p._id] }))
+        .filter(({ stats }) => stats && stats.min !== stats.max)
+        .sort((a, b) => b.stats.max - b.stats.min - (a.stats.max - a.stats.min)),
+    [products, variationStats]
+  );
 
   useEffect(() => {
     if (!productId && products.length > 0) setProductId(products[0]._id);
@@ -101,6 +134,71 @@ export default function PriceAnalytics() {
             <a href={selected.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer">
               Open product page ↗
             </a>
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0 }}>Price variations</h3>
+          <div style={{ display: "flex", gap: 8 }}>
+            {VARIATION_RANGES.map((r) => (
+              <button
+                key={r.key}
+                className={`btn ${variationRange === r.key ? "" : "secondary"}`}
+                onClick={() => setVariationRange(r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {priceVariations.length === 0 ? (
+          <p style={{ color: "#4c6b8a", marginTop: 12 }}>
+            No price has moved in the last {VARIATION_RANGES.find((r) => r.key === variationRange).label}.
+          </p>
+        ) : (
+          <div className="table-scroll">
+            <table style={{ marginTop: 12 }}>
+              <colgroup>
+                <col style={{ width: 220 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 110 }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Site</th>
+                  <th>Current</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Avg</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {priceVariations.map(({ product: p, stats }) => (
+                  <tr key={p._id}>
+                    <td>
+                      <a href={p.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer" title={p.name}>
+                        {p.name}
+                      </a>
+                    </td>
+                    <td>{p.site}</td>
+                    <td>₹{p.lastPrice}</td>
+                    <td>₹{stats.min}</td>
+                    <td>₹{stats.max}</td>
+                    <td>₹{stats.avg}</td>
+                    <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
