@@ -30,6 +30,71 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Dashboard equivalent of the "Price & Stock Changes" Google Sheet tab — a timestamped
+// feed of every stock-status change across all products, not just a current snapshot
+// (the Flagged table above only shows what's flagged *right now*, with no trace of
+// when it happened or what changed before it).
+function RecentStockChanges({ siteFilter }) {
+  const { data: events = [], isLoading, error } = useQuery({
+    queryKey: ["stockEvents", "recent"],
+    queryFn: api.getAllStockEvents,
+  });
+
+  const filtered = useMemo(
+    () => events.filter((e) => siteFilter === "all" || e.productSite === siteFilter),
+    [events, siteFilter]
+  );
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>🕐 Recent stock changes</h3>
+      {isLoading ? (
+        <p style={{ color: "#4c6b8a" }}>Loading…</p>
+      ) : error ? (
+        <p style={{ color: "#a71d1d" }}>{error.message}</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ color: "#4c6b8a" }}>No stock changes recorded yet.</p>
+      ) : (
+        <div className="table-scroll">
+          <table>
+            <colgroup>
+              <col style={{ width: 150 }} />
+              <col style={{ width: 220 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 200 }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Product</th>
+                <th>Site</th>
+                <th>Status</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e) => (
+                <tr key={e._id}>
+                  <td>{new Date(e.checkedAt).toLocaleString()}</td>
+                  <td>
+                    <a href={toDisplayUrl(e.productUrl)} target="_blank" rel="noopener noreferrer" title={e.productName}>
+                      {shortenName(e.productName)}
+                    </a>
+                  </td>
+                  <td>{e.productSite}</td>
+                  <td><StockBadge status={e.status} quantity={e.quantity} /></td>
+                  <td>{e.raw || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PriceStockVariation() {
   const [sortDir, setSortDir] = useState("desc"); // "desc" = high to low, "asc" = low to high
   const [fromDate, setFromDate] = useState(""); // empty = default "last 24h" mode
@@ -114,10 +179,11 @@ export default function PriceStockVariation() {
                 little content Site/Price/Stock actually need — that read as a huge,
                 uneven gap between Product and Site especially on mobile. */}
             <colgroup>
-              <col style={{ width: 240 }} />
+              <col style={{ width: 220 }} />
               <col style={{ width: 90 }} />
               <col style={{ width: 90 }} />
-              <col style={{ width: 110 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 150 }} />
             </colgroup>
             <thead>
               <tr>
@@ -125,6 +191,7 @@ export default function PriceStockVariation() {
                 <th>Site</th>
                 <th>Price</th>
                 <th>Stock</th>
+                <th>Last checked</th>
               </tr>
             </thead>
             <tbody>
@@ -134,6 +201,7 @@ export default function PriceStockVariation() {
                   <td>{p.site}</td>
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
+                  <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -141,6 +209,8 @@ export default function PriceStockVariation() {
           </div>
         )}
       </div>
+
+      <RecentStockChanges siteFilter={siteFilter} />
 
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
