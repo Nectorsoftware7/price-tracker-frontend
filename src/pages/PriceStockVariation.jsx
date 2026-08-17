@@ -41,6 +41,8 @@ function todayStr() {
 // (the Flagged table above only shows what's flagged *right now*, with no trace of
 // when it happened or what changed before it).
 function RecentStockChanges({ siteFilter, activityCutoff }) {
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: ["stockEvents", "recent"],
     queryFn: api.getAllStockEvents,
@@ -49,14 +51,26 @@ function RecentStockChanges({ siteFilter, activityCutoff }) {
   const filtered = useMemo(
     () =>
       events.filter(
-        (e) => (siteFilter === "all" || e.productSite === siteFilter) && new Date(e.checkedAt).getTime() >= activityCutoff
+        (e) =>
+          (siteFilter === "all" || e.productSite === siteFilter) &&
+          (statusFilter === "all" || e.status === statusFilter) &&
+          new Date(e.checkedAt).getTime() >= activityCutoff
       ),
-    [events, siteFilter, activityCutoff]
+    [events, siteFilter, statusFilter, activityCutoff]
   );
 
   return (
     <div className="card">
-      <h3 style={{ marginTop: 0 }}>🕐 Recent stock changes</h3>
+      <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+        <h3 style={{ margin: 0 }}>🕐 Recent stock changes</h3>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="all">All stock statuses</option>
+          <option value="in_stock">In stock</option>
+          <option value="low_stock">Low stock</option>
+          <option value="out_of_stock">Out of stock</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </div>
       {isLoading ? (
         <p style={{ color: "#4c6b8a" }}>Loading…</p>
       ) : error ? (
