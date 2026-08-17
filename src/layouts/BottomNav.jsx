@@ -64,12 +64,12 @@ export default function BottomNav() {
   const { role } = useAuth();
 
   const items = [
-    role === "superadmin" && { to: "/dashboard", label: "Dashboard", Icon: DashboardIcon },
+    (role === "superadmin" || role === "viewer") && { to: "/dashboard", label: "Dashboard", Icon: DashboardIcon },
     role !== "superadmin" && { to: "/", end: true, label: "Products", Icon: ProductsIcon },
     { to: "/price-stock", label: "Price & Stock", Icon: PriceStockIcon },
     { to: "/price-analytics", label: "Analytics", Icon: AnalyticsIcon },
     { to: "/reviews", label: "Contact", Icon: ContactIcon },
-    role === "superadmin" && { to: "/users", label: "Users", Icon: UsersIcon },
+    (role === "superadmin" || role === "viewer") && { to: "/users", label: "Users", Icon: UsersIcon },
   ].filter(Boolean);
 
   return (

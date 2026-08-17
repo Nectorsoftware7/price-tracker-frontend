@@ -15,6 +15,23 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [username, setUsername] = useState(() => localStorage.getItem("username"));
   const [role, setRole] = useState(readStoredRole);
+  const [viewerBlockedOpen, setViewerBlockedOpen] = useState(false);
+  const isViewer = role === "viewer";
+
+  // Every write action in the app calls this instead of running directly — all
+  // buttons stay visible for a viewer (so they can see exactly what the full app
+  // offers), but the action itself never runs; a popup explains why instead of the
+  // button silently doing nothing. The real, unbypassable block is server-side
+  // (blockViewer middleware) — this is just the UI half of that same rule.
+  function guardAction(action) {
+    return (...args) => {
+      if (isViewer) {
+        setViewerBlockedOpen(true);
+        return;
+      }
+      return action(...args);
+    };
+  }
 
   function applySession(newToken, user) {
     localStorage.setItem("token", newToken);
@@ -45,11 +62,26 @@ export function AuthProvider({ children }) {
   }
 
   const value = useMemo(
-    () => ({ token, username, role, isAuthenticated: Boolean(token), login, loginWithGoogle, logout }),
+    () => ({ token, username, role, isViewer, isAuthenticated: Boolean(token), login, loginWithGoogle, logout, guardAction }),
     [token, username, role]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {viewerBlockedOpen && (
+        <div className="viewer-blocked-overlay" onClick={() => setViewerBlockedOpen(false)}>
+          <div className="viewer-blocked-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>View-only account</h3>
+            <p style={{ color: "#4c6b8a" }}>
+              This account is only for viewing. Editing, deleting, adding, and other write actions are disabled.
+            </p>
+            <button className="btn" onClick={() => setViewerBlockedOpen(false)}>OK</button>
+          </div>
+        </div>
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

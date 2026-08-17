@@ -9,7 +9,7 @@ const TABS = [
   { key: "woocommerce", label: "WooCommerce" },
 ];
 
-function ConversationCard({ submission, onReplySent, isViewer }) {
+function ConversationCard({ submission, onReplySent, guardAction }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -84,29 +84,26 @@ function ConversationCard({ submission, onReplySent, isViewer }) {
       )}
 
       {/* Reply-from-here box */}
-      {!isViewer && (
-        <div className="form-row" style={{ marginTop: 8 }}>
-          <input
-            placeholder={submission.email ? "Type a reply and send..." : "No email on this submission — can't reply"}
-            style={{ flex: 1 }}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            disabled={!submission.email}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          />
-          <button className="btn" onClick={handleSend} disabled={!submission.email || sending || !draft.trim()}>
-            {sending ? "Sending..." : "Send"}
-          </button>
-        </div>
-      )}
+      <div className="form-row" style={{ marginTop: 8 }}>
+        <input
+          placeholder={submission.email ? "Type a reply and send..." : "No email on this submission — can't reply"}
+          style={{ flex: 1 }}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          disabled={!submission.email}
+          onKeyDown={(e) => e.key === "Enter" && guardAction(handleSend)()}
+        />
+        <button className="btn" onClick={guardAction(handleSend)} disabled={!submission.email || sending || !draft.trim()}>
+          {sending ? "Sending..." : "Send"}
+        </button>
+      </div>
       {error && <p style={{ color: "#a71d1d", fontSize: 13, marginTop: 6 }}>{error}</p>}
     </div>
   );
 }
 
 export default function Reviews() {
-  const { role } = useAuth();
-  const isViewer = role === "viewer";
+  const { guardAction } = useAuth();
   const queryClient = useQueryClient();
   const { data: submissions = [], isLoading: loading, error } = useQuery({
     queryKey: ["contactSubmissions"],
@@ -146,7 +143,7 @@ export default function Reviews() {
           <p style={{ color: "#4c6b8a", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>
         </div>
       ) : (
-        filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} isViewer={isViewer} />)
+        filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} guardAction={guardAction} />)
       )}
     </div>
   );

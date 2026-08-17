@@ -20,7 +20,7 @@ export default function MainLayout() {
 
       <aside className="sidebar">
         <nav>
-          {role === "superadmin" && (
+          {(role === "superadmin" || role === "viewer") && (
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
               Dashboard
             </NavLink>
@@ -39,7 +39,7 @@ export default function MainLayout() {
           <NavLink to="/reviews" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Contact Form
           </NavLink>
-          {role === "superadmin" && (
+          {(role === "superadmin" || role === "viewer") && (
             <NavLink to="/users" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
               Users
             </NavLink>

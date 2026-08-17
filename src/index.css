@@ -15,6 +15,29 @@
 }
 
 * { box-sizing: border-box; }
+
+.viewer-blocked-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 13, 36, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+}
+.viewer-blocked-modal {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(58, 13, 36, 0.25);
+}
+.viewer-blocked-modal .btn {
+  width: 100%;
+  margin-top: 8px;
+}
 html, body, #root { height: 100%; width: 100%; }
 body {
   margin: 0;

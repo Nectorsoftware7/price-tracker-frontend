@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
+import { useAuth } from "../features/auth/AuthContext.jsx";
 
 const ROLE_LABELS = { admin: "E-commerce Executive", superadmin: "Superadmin" };
 
@@ -69,6 +70,7 @@ function ApprovedRow({ user, onToggleActive }) {
 }
 
 export default function Users() {
+  const { guardAction } = useAuth();
   const queryClient = useQueryClient();
   const { data: users = [], isLoading: loading, error } = useQuery({ queryKey: ["users"], queryFn: api.getUsers });
 
@@ -119,7 +121,7 @@ export default function Users() {
               </thead>
               <tbody>
                 {pending.map((u) => (
-                  <ApproveRow key={u._id} user={u} onApprove={handleApprove} />
+                  <ApproveRow key={u._id} user={u} onApprove={guardAction(handleApprove)} />
                 ))}
               </tbody>
             </table>
@@ -149,7 +151,7 @@ export default function Users() {
             </thead>
             <tbody>
               {approved.map((u) => (
-                <ApprovedRow key={u._id} user={u} onToggleActive={handleToggleActive} />
+                <ApprovedRow key={u._id} user={u} onToggleActive={guardAction(handleToggleActive)} />
               ))}
             </tbody>
           </table>

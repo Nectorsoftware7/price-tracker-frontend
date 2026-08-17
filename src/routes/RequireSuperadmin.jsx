@@ -1,10 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 
-// The Users approval page is a real privilege boundary (assigning roles), so only the
-// superadmin role can reach it — everyone else gets bounced to the home route.
+// Guards the Dashboard and Users pages. The viewer role also gets in (read-only demo
+// access is meant to show the whole app, sidebar included) — the real privilege
+// boundary on Users (assigning roles, approving accounts) is enforced separately:
+// server-side by requireRole("superadmin") on the write routes, client-side by
+// guardAction popups on the approve/activate buttons. Every other role is bounced home.
 export default function RequireSuperadmin({ children }) {
   const { role } = useAuth();
-  if (role !== "superadmin") return <Navigate to="/" replace />;
+  if (role !== "superadmin" && role !== "viewer") return <Navigate to="/" replace />;
   return children;
 }
