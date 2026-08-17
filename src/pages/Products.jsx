@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
+import { useAuth } from "../features/auth/AuthContext.jsx";
 
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
@@ -13,6 +14,8 @@ const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
 
 export default function Products() {
+  const { role } = useAuth();
+  const isViewer = role === "viewer";
   const queryClient = useQueryClient();
   // staleTime here (set globally in main.jsx) means revisiting this page shows
   // whatever was cached from last time instantly — no loading spinner — while quietly
@@ -210,6 +213,7 @@ export default function Products() {
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
       {successMessage && <div className="card" style={{ color: "#1a7f37" }}>{successMessage}</div>}
 
+      {!isViewer && (
       <div className="card" ref={formCardRef}>
         <h3 style={{ marginTop: 0 }}>{editingId ? "Edit product" : "Add product"}</h3>
         <form
@@ -273,7 +277,9 @@ export default function Products() {
           </div>
         </form>
       </div>
+      )}
 
+      {!isViewer && (
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Bulk import</h3>
         <p style={{ marginTop: 0, color: "#666" }}>
@@ -319,6 +325,7 @@ export default function Products() {
           </p>
         )}
       </div>
+      )}
 
       <div className="card">
         {loading ? (
@@ -345,9 +352,11 @@ export default function Products() {
                   ))}
                 </select>
               </div>
-              <button className="btn" disabled={checkingAll} onClick={handleCheckAll}>
-                {checkingAll ? "Checking all products..." : "Check all products"}
-              </button>
+              {!isViewer && (
+                <button className="btn" disabled={checkingAll} onClick={handleCheckAll}>
+                  {checkingAll ? "Checking all products..." : "Check all products"}
+                </button>
+              )}
             </div>
             <div className="table-scroll">
             <table className="table-products">
@@ -364,7 +373,7 @@ export default function Products() {
               <col style={{ width: 80 }} />
               <col style={{ width: 100 }} />
               <col style={{ width: 150 }} />
-              <col style={{ width: 280 }} />
+              {!isViewer && <col style={{ width: 280 }} />}
             </colgroup>
             <thead>
               <tr>
@@ -373,7 +382,7 @@ export default function Products() {
                 <th>Last price</th>
                 <th>Stock</th>
                 <th>Last checked</th>
-                <th style={{ textAlign: "center" }}>Actions</th>
+                {!isViewer && <th style={{ textAlign: "center" }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -387,13 +396,15 @@ export default function Products() {
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>
-                  <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-                    <button className="btn secondary" disabled={busyId === p._id} onClick={() => handleCheckNow(p._id)}>
-                      {busyId === p._id ? "Checking..." : "Check now"}
-                    </button>
-                    <button className="btn secondary" onClick={() => handleEditClick(p)}>Edit</button>
-                    <button className="btn danger" onClick={() => handleDelete(p._id)}>Delete</button>
-                  </td>
+                  {!isViewer && (
+                    <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                      <button className="btn secondary" disabled={busyId === p._id} onClick={() => handleCheckNow(p._id)}>
+                        {busyId === p._id ? "Checking..." : "Check now"}
+                      </button>
+                      <button className="btn secondary" onClick={() => handleEditClick(p)}>Edit</button>
+                      <button className="btn danger" onClick={() => handleDelete(p._id)}>Delete</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

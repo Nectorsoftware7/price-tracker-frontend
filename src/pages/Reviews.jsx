@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
+import { useAuth } from "../features/auth/AuthContext.jsx";
 
 const TABS = [
   { key: "shopify", label: "Shopify" },
   { key: "woocommerce", label: "WooCommerce" },
 ];
 
-function ConversationCard({ submission, onReplySent }) {
+function ConversationCard({ submission, onReplySent, isViewer }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -83,25 +84,29 @@ function ConversationCard({ submission, onReplySent }) {
       )}
 
       {/* Reply-from-here box */}
-      <div className="form-row" style={{ marginTop: 8 }}>
-        <input
-          placeholder={submission.email ? "Type a reply and send..." : "No email on this submission — can't reply"}
-          style={{ flex: 1 }}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          disabled={!submission.email}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-        />
-        <button className="btn" onClick={handleSend} disabled={!submission.email || sending || !draft.trim()}>
-          {sending ? "Sending..." : "Send"}
-        </button>
-      </div>
+      {!isViewer && (
+        <div className="form-row" style={{ marginTop: 8 }}>
+          <input
+            placeholder={submission.email ? "Type a reply and send..." : "No email on this submission — can't reply"}
+            style={{ flex: 1 }}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            disabled={!submission.email}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          />
+          <button className="btn" onClick={handleSend} disabled={!submission.email || sending || !draft.trim()}>
+            {sending ? "Sending..." : "Send"}
+          </button>
+        </div>
+      )}
       {error && <p style={{ color: "#a71d1d", fontSize: 13, marginTop: 6 }}>{error}</p>}
     </div>
   );
 }
 
 export default function Reviews() {
+  const { role } = useAuth();
+  const isViewer = role === "viewer";
   const queryClient = useQueryClient();
   const { data: submissions = [], isLoading: loading, error } = useQuery({
     queryKey: ["contactSubmissions"],
@@ -141,7 +146,7 @@ export default function Reviews() {
           <p style={{ color: "#4c6b8a", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>
         </div>
       ) : (
-        filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} />)
+        filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} isViewer={isViewer} />)
       )}
     </div>
   );
