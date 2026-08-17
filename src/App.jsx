@@ -11,6 +11,7 @@ import Reviews from "./pages/Reviews.jsx";
 import PriceStockVariation from "./pages/PriceStockVariation.jsx";
 import PriceAnalytics from "./pages/PriceAnalytics.jsx";
 import Users from "./pages/Users.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 
 export default function App() {
   return (
@@ -50,6 +51,14 @@ export default function App() {
           }
         />
         <Route path="reviews" element={<Reviews />} />
+        <Route
+          path="dashboard"
+          element={
+            <RequireSuperadmin>
+              <Dashboard />
+            </RequireSuperadmin>
+          }
+        />
         <Route
           path="users"
           element={

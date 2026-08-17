@@ -19,6 +19,11 @@ export default function MainLayout() {
 
       <aside className="sidebar">
         <nav>
+          {role === "superadmin" && (
+            <NavLink to="/dashboard" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
+              Dashboard
+            </NavLink>
+          )}
           {role !== "superadmin" && (
             <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
               Products
