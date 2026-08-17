@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
+import BottomNav from "./BottomNav.jsx";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 
 export default function MainLayout() {
@@ -51,6 +52,8 @@ export default function MainLayout() {
           &copy; {new Date().getFullYear()} Nector Foods Pvt Ltd. All rights reserved.
         </footer>
       </main>
+
+      <BottomNav />
     </div>
   );
 }
