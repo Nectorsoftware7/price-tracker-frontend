@@ -394,7 +394,22 @@ export default function Products() {
                 .filter((p) => siteFilter === "all" || p.site === siteFilter)
                 .map((p) => (
                 <tr key={p._id}>
-                  <td><Link to={`/products/${p._id}`} title={p.name}>{p.name}</Link></td>
+                  {/* The name opens the actual listing on the marketplace — that's what
+                      you want when checking "is this really out of stock?". The tracker's
+                      own price/stock history moves to a separate small link, since the
+                      name was previously the only route to it. */}
+                  <td>
+                    <a href={p.url} target="_blank" rel="noopener noreferrer" title={p.name}>
+                      {p.name}
+                    </a>
+                    <Link
+                      to={`/products/${p._id}`}
+                      title="Price & stock history recorded by the tracker"
+                      style={{ display: "block", fontSize: 11, marginTop: 2, color: "var(--text-muted)" }}
+                    >
+                      History
+                    </Link>
+                  </td>
                   <td>{p.site}</td>
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
