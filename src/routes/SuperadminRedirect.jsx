@@ -1,10 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 
-// The superadmin role only sees Price & Stock, Price Analytics, and Contact Form —
-// Products (and its detail page) redirect it away instead of rendering.
+// Products (and its detail page) live at "/" for the admin role, but superadmin and
+// viewer both land on Dashboard instead — redirect them away from the Products route
+// rather than rendering it there.
 export default function SuperadminRedirect({ children }) {
   const { role } = useAuth();
-  if (role === "superadmin") return <Navigate to="/price-stock" replace />;
+  if (role === "superadmin" || role === "viewer") return <Navigate to="/dashboard" replace />;
   return children;
 }
