@@ -104,19 +104,21 @@ export default function Products() {
   }
 
   // Converts a worksheet's raw rows (array-of-arrays, header included) into product
-  // rows. Supports either 3 columns (Platform, Product Name, Link) or 4 (Platform,
-  // Brand, Product Name, Link) — Brand is dropped either way, since the tracker has no
-  // use for it. A header row (first cell "platform") is skipped.
+  // rows. Supports either 3 columns (Product Name, Platform, Link) or 4 (Product Name,
+  // Brand, Platform, Link) — Brand is dropped either way, since the tracker has no use
+  // for it. Column order matches the Product_List tracking sheet (Product Name, Brand,
+  // Platform, ...) rather than leading with Platform. A header row (first cell
+  // "product name") is skipped.
   function sheetRowsToProducts(sheetRows) {
     const rows = [];
     for (const raw of sheetRows) {
       const cols = raw.map((c) => String(c ?? "").trim());
       if (!cols.some(Boolean)) continue; // blank row
-      if (cols[0]?.toLowerCase() === "platform") continue; // header row
+      if (cols[0]?.toLowerCase() === "product name") continue; // header row
       if (cols.length >= 4) {
-        rows.push({ site: cols[0], name: cols[2], url: cols[3] });
+        rows.push({ name: cols[0], site: cols[2], url: cols[3] });
       } else if (cols.length === 3) {
-        rows.push({ site: cols[0], name: cols[1], url: cols[2] });
+        rows.push({ name: cols[0], site: cols[1], url: cols[2] });
       }
     }
     return rows;
@@ -137,7 +139,7 @@ export default function Products() {
         const sheetRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
         const rows = sheetRowsToProducts(sheetRows);
         if (rows.length === 0) {
-          setError("Couldn't find any valid rows in that file — use the template below (Platform, Product Name, Link columns).");
+          setError("Couldn't find any valid rows in that file — use the template below (Product Name, Platform, Link columns).");
         }
         setBulkRows(rows);
       } catch (err) {
@@ -149,8 +151,8 @@ export default function Products() {
 
   function handleDownloadTemplate() {
     const worksheet = XLSX.utils.aoa_to_sheet([
-      ["Platform", "Brand", "Product Name", "Product Link"],
-      ["Flipkart", "KOBRA", "KOBRA Gokshura Tablets Supplement Tablets (30 Tablets)", "https://www.flipkart.com/kobra-gokshura-tablets-supplement/p/itm1fc97e62f760d"],
+      ["Product Name", "Brand", "Platform", "Product Link"],
+      ["KOBRA Gokshura Tablets Supplement Tablets (30 Tablets)", "KOBRA", "Flipkart", "https://www.flipkart.com/kobra-gokshura-tablets-supplement/p/itm1fc97e62f760d"],
     ]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
@@ -279,7 +281,7 @@ export default function Products() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Bulk import</h3>
         <p style={{ marginTop: 0, color: "#666" }}>
-          Upload an Excel file with Platform, Product Name and Link columns (a Brand column in
+          Upload an Excel file with Product Name, Platform and Link columns (a Brand column in
           between is fine too, it's ignored). Not sure of the format — download the template first.
         </p>
         <div className="form-row">
