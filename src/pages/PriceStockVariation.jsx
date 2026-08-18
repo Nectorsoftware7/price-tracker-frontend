@@ -6,7 +6,7 @@ import Loader from "../components/Loader.jsx";
 
 const FLAGGED_STATUSES = ["out_of_stock", "low_stock"];
 const NAME_MAX_LENGTH = 42;
-const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
+const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle", "myntra"];
 
 const ACTIVITY_RANGES = [
   { key: "24h", label: "24 hours", hours: 24 },

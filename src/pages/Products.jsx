@@ -11,7 +11,7 @@ import { useAuth } from "../features/auth/AuthContext.jsx";
 // built-in fallback selector on the server for sites like JioMart that need one) —
 // the form only ever needs a name, site, and URL.
 const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
-const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle"];
+const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle", "myntra"];
 
 export default function Products() {
   const { guardAction } = useAuth();
@@ -251,6 +251,7 @@ export default function Products() {
               <option value="nykaa">Nykaa</option>
               <option value="snapdeal">Snapdeal</option>
               <option value="purplle">Purplle</option>
+              <option value="myntra">Myntra</option>
             </select>
           </div>
           <div className="form-row">
