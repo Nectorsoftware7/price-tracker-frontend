@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../api";
@@ -19,6 +19,7 @@ export default function PriceAnalytics() {
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const [variationRange, setVariationRange] = useState("24h");
+  const chartRef = useRef(null);
 
   const { data: products = [], isLoading: loading } = useQuery({ queryKey: ["products"], queryFn: api.getProducts });
 
@@ -89,6 +90,23 @@ export default function PriceAnalytics() {
     }
   }
 
+  // Jumping to a product's graph straight from the variations table below. The product
+  // dropdown at the top is filtered, so a product those filters exclude would leave the
+  // dropdown and the chart showing different things — widen the filters in that case
+  // rather than letting the two desync.
+  function showGraphFor(product) {
+    if (!matchesFilters(product, stockFilter, siteFilter)) {
+      setStockFilter("all");
+      setSiteFilter("all");
+    }
+    setProductId(product._id);
+    // The page itself doesn't scroll (.main is the scrolling container), so
+    // scrollIntoView is used rather than window.scrollTo — it finds whichever ancestor
+    // actually scrolls. Instant, since a smooth scroll only animates while the tab is
+    // being composited, which isn't guaranteed the moment a click handler runs.
+    chartRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
   return (
     <div>
       <h2>Price Analytics</h2>
@@ -138,71 +156,6 @@ export default function PriceAnalytics() {
         )}
       </div>
 
-      <div className="card">
-        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0 }}>Price variations</h3>
-          <div style={{ display: "flex", gap: 8 }}>
-            {VARIATION_RANGES.map((r) => (
-              <button
-                key={r.key}
-                className={`btn ${variationRange === r.key ? "" : "secondary"}`}
-                onClick={() => setVariationRange(r.key)}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {priceVariations.length === 0 ? (
-          <p style={{ color: "#4c6b8a", marginTop: 12 }}>
-            No price has moved in the last {VARIATION_RANGES.find((r) => r.key === variationRange).label}.
-          </p>
-        ) : (
-          <div className="table-scroll">
-            <table style={{ marginTop: 12 }}>
-              <colgroup>
-                <col style={{ width: 220 }} />
-                <col style={{ width: 80 }} />
-                <col style={{ width: 80 }} />
-                <col style={{ width: 70 }} />
-                <col style={{ width: 70 }} />
-                <col style={{ width: 70 }} />
-                <col style={{ width: 110 }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Site</th>
-                  <th>Current</th>
-                  <th>Min</th>
-                  <th>Max</th>
-                  <th>Avg</th>
-                  <th>Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {priceVariations.map(({ product: p, stats }) => (
-                  <tr key={p._id}>
-                    <td>
-                      <a href={p.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer" title={p.name}>
-                        {p.name}
-                      </a>
-                    </td>
-                    <td>{p.site}</td>
-                    <td>₹{p.lastPrice}</td>
-                    <td>₹{stats.min}</td>
-                    <td>₹{stats.max}</td>
-                    <td>₹{stats.avg}</td>
-                    <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {history?.stats24h && (
         <div className="stat-row">
           <div className="stat"><div className="label">24h min</div><div className="value">₹{history.stats24h.min}</div></div>
@@ -212,7 +165,7 @@ export default function PriceAnalytics() {
         </div>
       )}
 
-      <div className="card">
+      <div className="card" ref={chartRef}>
         <div className="form-row">
           {[1, 7, 30].map((d) => (
             <button key={d} className={`btn ${days === d ? "" : "secondary"}`} onClick={() => setDays(d)}>
@@ -258,6 +211,84 @@ export default function PriceAnalytics() {
               ))}
             </tbody>
           </table>
+          </div>
+        )}
+      </div>
+
+      {/* Sits below the chart: it's the "which product should I look at?" list, so the
+          graph it feeds is what should be on screen first. */}
+      <div className="card">
+        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0 }}>Price variations</h3>
+          <div style={{ display: "flex", gap: 8 }}>
+            {VARIATION_RANGES.map((r) => (
+              <button
+                key={r.key}
+                className={`btn ${variationRange === r.key ? "" : "secondary"}`}
+                onClick={() => setVariationRange(r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {priceVariations.length === 0 ? (
+          <p style={{ color: "#4c6b8a", marginTop: 12 }}>
+            No price has moved in the last {VARIATION_RANGES.find((r) => r.key === variationRange).label}.
+          </p>
+        ) : (
+          <div className="table-scroll">
+            <table style={{ marginTop: 12 }}>
+              <colgroup>
+                <col style={{ width: 220 }} />
+                <col style={{ width: 130 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 70 }} />
+                <col style={{ width: 110 }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Graph analysis</th>
+                  <th>Site</th>
+                  <th>Current</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Avg</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {priceVariations.map(({ product: p, stats }) => (
+                  <tr key={p._id}>
+                    <td>
+                      <a href={p.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer" title={p.name}>
+                        {p.name}
+                      </a>
+                    </td>
+                    <td>
+                      <button
+                        className="btn secondary"
+                        onClick={() => showGraphFor(p)}
+                        title={`Show the price graph for ${p.name}`}
+                      >
+                        📈 View graph
+                      </button>
+                    </td>
+                    <td>{p.site}</td>
+                    <td>₹{p.lastPrice}</td>
+                    <td>₹{stats.min}</td>
+                    <td>₹{stats.max}</td>
+                    <td>₹{stats.avg}</td>
+                    <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
