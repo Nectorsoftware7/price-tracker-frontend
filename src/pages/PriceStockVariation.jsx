@@ -124,6 +124,7 @@ export default function PriceStockVariation() {
   const [toDate, setToDate] = useState("");
   const [siteFilter, setSiteFilter] = useState("all");
   const [activityRange, setActivityRange] = useState("24h"); // Flagged + Recent stock changes
+  const [flaggedView, setFlaggedView] = useState("log"); // "log" = out of stock + low stock, "oos" = out of stock only
 
   const useCustomRange = Boolean(fromDate && toDate);
 
@@ -176,6 +177,12 @@ export default function PriceStockVariation() {
     [products, siteFilter, activityCutoff]
   );
 
+  // "Flagged" mixes out-of-stock with low-stock, but the usual question is just "how
+  // many are actually out of stock right now" — so the count is always shown, and the
+  // toggle narrows the table to only those rows.
+  const outOfStock = useMemo(() => flagged.filter((p) => p.lastStock === "out_of_stock"), [flagged]);
+  const flaggedRows = flaggedView === "oos" ? outOfStock : flagged;
+
   // Only products with an actual price swing in the window (min != max) — a flat price isn't a "variation".
   const varied = useMemo(() => {
     const withVariation = products
@@ -219,9 +226,28 @@ export default function PriceStockVariation() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
-        {flagged.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>Nothing flagged in the last {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.</p>
+        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className={`btn ${flaggedView === "log" ? "" : "secondary"}`} onClick={() => setFlaggedView("log")}>
+              With log
+            </button>
+            <button className={`btn ${flaggedView === "oos" ? "" : "secondary"}`} onClick={() => setFlaggedView("oos")}>
+              Only out of stock
+            </button>
+          </div>
+        </div>
+
+        <p style={{ color: "#4c6b8a", marginTop: 8 }}>
+          <b style={{ color: "var(--text)" }}>{outOfStock.length}</b> out of stock
+          {flagged.length - outOfStock.length > 0 && `, ${flagged.length - outOfStock.length} low stock`}
+        </p>
+
+        {flaggedRows.length === 0 ? (
+          <p style={{ color: "#4c6b8a" }}>
+            {flaggedView === "oos" ? "Nothing out of stock" : "Nothing flagged"} in the last{" "}
+            {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.
+          </p>
         ) : (
           <div className="table-scroll">
           <table>
@@ -246,7 +272,7 @@ export default function PriceStockVariation() {
               </tr>
             </thead>
             <tbody>
-              {flagged.map((p) => (
+              {flaggedRows.map((p) => (
                 <tr key={p._id}>
                   <td><ProductLink product={p} /></td>
                   <td>{p.site}</td>
