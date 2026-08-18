@@ -31,7 +31,7 @@ export default function MainLayout() {
             </NavLink>
           )}
           <NavLink to="/price-stock" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
-            Price &amp; Stock
+            Stock status
           </NavLink>
           <NavLink to="/price-analytics" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Price Analytics

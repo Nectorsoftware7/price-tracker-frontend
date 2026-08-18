@@ -124,7 +124,6 @@ export default function PriceStockVariation() {
   const [toDate, setToDate] = useState("");
   const [siteFilter, setSiteFilter] = useState("all");
   const [activityRange, setActivityRange] = useState("24h"); // Flagged + Recent stock changes
-  const [flaggedView, setFlaggedView] = useState("log"); // "log" = out of stock + low stock, "oos" = out of stock only
 
   const useCustomRange = Boolean(fromDate && toDate);
 
@@ -178,10 +177,8 @@ export default function PriceStockVariation() {
   );
 
   // "Flagged" mixes out-of-stock with low-stock, but the usual question is just "how
-  // many are actually out of stock right now" — so the count is always shown, and the
-  // toggle narrows the table to only those rows.
+  // many are actually out of stock right now" — so that count is stated above the table.
   const outOfStock = useMemo(() => flagged.filter((p) => p.lastStock === "out_of_stock"), [flagged]);
-  const flaggedRows = flaggedView === "oos" ? outOfStock : flagged;
 
   // Only products with an actual price swing in the window (min != max) — a flat price isn't a "variation".
   const varied = useMemo(() => {
@@ -198,7 +195,7 @@ export default function PriceStockVariation() {
 
   return (
     <div>
-      <h2>Price &amp; Stock variation</h2>
+      <h2>Stock status</h2>
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error}</div>}
 
       <div className="card">
@@ -226,38 +223,26 @@ export default function PriceStockVariation() {
       </div>
 
       <div className="card">
-        <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className={`btn ${flaggedView === "log" ? "" : "secondary"}`} onClick={() => setFlaggedView("log")}>
-              With log
-            </button>
-            <button className={`btn ${flaggedView === "oos" ? "" : "secondary"}`} onClick={() => setFlaggedView("oos")}>
-              Only out of stock
-            </button>
-          </div>
-        </div>
+        <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
 
         <p style={{ color: "#4c6b8a", marginTop: 8 }}>
           <b style={{ color: "var(--text)" }}>{outOfStock.length}</b> out of stock
           {flagged.length - outOfStock.length > 0 && `, ${flagged.length - outOfStock.length} low stock`}
         </p>
 
-        {flaggedRows.length === 0 ? (
+        {flagged.length === 0 ? (
           <p style={{ color: "#4c6b8a" }}>
-            {flaggedView === "oos" ? "Nothing out of stock" : "Nothing flagged"} in the last{" "}
-            {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.
+            Nothing flagged in the last {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.
           </p>
         ) : (
           <div className="table-scroll">
           <table>
             {/* Fixed, tight column widths instead of the browser's default table-layout,
                 which stretches columns to fill the container evenly regardless of how
-                little content Site/Price/Stock actually need — that read as a huge,
-                uneven gap between Product and Site especially on mobile. */}
+                little content Site/Stock actually need — that read as a huge, uneven gap
+                between Product and Site especially on mobile. */}
             <colgroup>
               <col style={{ width: 220 }} />
-              <col style={{ width: 90 }} />
               <col style={{ width: 90 }} />
               <col style={{ width: 100 }} />
               <col style={{ width: 150 }} />
@@ -266,17 +251,15 @@ export default function PriceStockVariation() {
               <tr>
                 <th>Product</th>
                 <th>Site</th>
-                <th>Price</th>
                 <th>Stock</th>
                 <th>Last checked</th>
               </tr>
             </thead>
             <tbody>
-              {flaggedRows.map((p) => (
+              {flagged.map((p) => (
                 <tr key={p._id}>
                   <td><ProductLink product={p} /></td>
                   <td>{p.site}</td>
-                  <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "—"}</td>
                 </tr>
