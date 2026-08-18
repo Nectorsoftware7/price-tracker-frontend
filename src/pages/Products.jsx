@@ -104,22 +104,29 @@ export default function Products() {
   }
 
   // Converts a worksheet's raw rows (array-of-arrays, header included) into product
-  // rows. Supports either 3 columns (Product Name, Platform, Link) or 4 (Product Name,
-  // Brand, Platform, Link) — Brand is dropped either way, since the tracker has no use
-  // for it. Column order matches the Product_List tracking sheet (Product Name, Brand,
-  // Platform, ...) rather than leading with Platform. A header row (first cell
-  // "product name") is skipped.
+  // rows. Looks up "Product Name"/"Platform"/"Product Link" (or "Link"/"URL") by
+  // *header name*, not fixed column position — the download template only has those
+  // 4 columns, but a sheet like Product_List's export has extra ones in between (SKU,
+  // Price/Status), and a hardcoded index silently grabbed the wrong column's text as
+  // the URL. Any extra columns (Brand, SKU, Price/Status, ...) are ignored wherever
+  // they sit.
   function sheetRowsToProducts(sheetRows) {
+    if (sheetRows.length === 0) return [];
+    const header = sheetRows[0].map((c) => String(c ?? "").trim().toLowerCase());
+    const nameIdx = header.indexOf("product name");
+    const platformIdx = header.indexOf("platform");
+    const linkIdx = header.findIndex((h) => h === "product link" || h === "link" || h === "url");
+    if (nameIdx === -1 || platformIdx === -1 || linkIdx === -1) return [];
+
     const rows = [];
-    for (const raw of sheetRows) {
+    for (const raw of sheetRows.slice(1)) {
       const cols = raw.map((c) => String(c ?? "").trim());
       if (!cols.some(Boolean)) continue; // blank row
-      if (cols[0]?.toLowerCase() === "product name") continue; // header row
-      if (cols.length >= 4) {
-        rows.push({ name: cols[0], site: cols[2], url: cols[3] });
-      } else if (cols.length === 3) {
-        rows.push({ name: cols[0], site: cols[1], url: cols[2] });
-      }
+      const name = cols[nameIdx];
+      const site = cols[platformIdx];
+      const url = cols[linkIdx];
+      if (!name || !site || !url) continue; // incomplete row — createProduct/bulkImport would reject it anyway
+      rows.push({ name, site, url });
     }
     return rows;
   }
