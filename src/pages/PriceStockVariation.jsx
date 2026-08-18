@@ -85,7 +85,6 @@ function RecentStockChanges({ siteFilter, activityCutoff }) {
               <col style={{ width: 220 }} />
               <col style={{ width: 90 }} />
               <col style={{ width: 100 }} />
-              <col style={{ width: 200 }} />
             </colgroup>
             <thead>
               <tr>
@@ -93,7 +92,6 @@ function RecentStockChanges({ siteFilter, activityCutoff }) {
                 <th>Product</th>
                 <th>Site</th>
                 <th>Status</th>
-                <th>Detail</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +105,6 @@ function RecentStockChanges({ siteFilter, activityCutoff }) {
                   </td>
                   <td>{e.productSite}</td>
                   <td><StockBadge status={e.status} quantity={e.quantity} /></td>
-                  <td>{e.raw || "—"}</td>
                 </tr>
               ))}
             </tbody>
