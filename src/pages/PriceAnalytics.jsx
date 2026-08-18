@@ -84,7 +84,15 @@ export default function PriceAnalytics() {
     }
   }
 
-  // Jumping to a product's graph straight from the variations table below. The product
+  // The page itself doesn't scroll (.main is the scrolling container), so scrollIntoView
+  // is used rather than window.scrollTo — it finds whichever ancestor actually scrolls.
+  // Instant, since a smooth scroll only animates while the tab is being composited,
+  // which isn't guaranteed the moment a click handler runs.
+  function scrollToChart() {
+    chartRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
+  // Jumping to a product's graph straight from the variations table. The product
   // dropdown at the top is filtered, so a product those filters exclude would leave the
   // dropdown and the chart showing different things — widen the filters in that case
   // rather than letting the two desync.
@@ -94,11 +102,7 @@ export default function PriceAnalytics() {
       setSiteFilter("all");
     }
     setProductId(product._id);
-    // The page itself doesn't scroll (.main is the scrolling container), so
-    // scrollIntoView is used rather than window.scrollTo — it finds whichever ancestor
-    // actually scrolls. Instant, since a smooth scroll only animates while the tab is
-    // being composited, which isn't guaranteed the moment a click handler runs.
-    chartRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+    scrollToChart();
   }
 
   return (
@@ -129,7 +133,13 @@ export default function PriceAnalytics() {
         ) : (
         <select
           value={productId ?? ""}
-          onChange={(e) => setProductId(Number(e.target.value))}
+          // Picking a product here means "show me this one's graph", but the chart now
+          // sits below the variations table — so jump to it rather than leaving the
+          // change happening off-screen.
+          onChange={(e) => {
+            setProductId(Number(e.target.value));
+            scrollToChart();
+          }}
           style={{ width: "100%", maxWidth: 480 }}
         >
           {filteredProducts.map((p) => (
