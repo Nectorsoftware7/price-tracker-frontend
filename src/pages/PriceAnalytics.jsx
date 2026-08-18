@@ -58,12 +58,6 @@ export default function PriceAnalytics() {
     queryFn: () => api.getHistory(productId, days),
     enabled: Boolean(productId),
   });
-  const { data: events = [] } = useQuery({
-    queryKey: ["stockEvents", productId],
-    queryFn: () => api.getStockEvents(productId),
-    enabled: Boolean(productId),
-  });
-
   if (loading) return <Loader />;
   if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;
 
@@ -185,33 +179,6 @@ export default function PriceAnalytics() {
               <Line type="monotone" dataKey="price" stroke="#2196f3" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
-        )}
-      </div>
-
-      <div className="card">
-        <h3 style={{ marginTop: 0 }}>Stock history</h3>
-        {events.length === 0 ? (
-          <p>No stock events yet.</p>
-        ) : (
-          <div className="table-scroll">
-          <table>
-            <colgroup>
-              <col style={{ width: 110 }} />
-              <col style={{ width: 260 }} />
-              <col style={{ width: 150 }} />
-            </colgroup>
-            <thead><tr><th>Status</th><th>Detail</th><th>When</th></tr></thead>
-            <tbody>
-              {events.map((e) => (
-                <tr key={e._id}>
-                  <td><StockBadge status={e.status} /></td>
-                  <td>{e.raw || "—"}</td>
-                  <td>{new Date(e.checkedAt).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
         )}
       </div>
 
