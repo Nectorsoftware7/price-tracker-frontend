@@ -150,40 +150,8 @@ export default function PriceAnalytics() {
         )}
       </div>
 
-      {history?.stats24h && (
-        <div className="stat-row">
-          <div className="stat"><div className="label">24h min</div><div className="value">₹{history.stats24h.min}</div></div>
-          <div className="stat"><div className="label">24h max</div><div className="value">₹{history.stats24h.max}</div></div>
-          <div className="stat"><div className="label">24h avg</div><div className="value">₹{history.stats24h.avg}</div></div>
-          <div className="stat"><div className="label">samples</div><div className="value">{history.stats24h.samples}</div></div>
-        </div>
-      )}
-
-      <div className="card" ref={chartRef}>
-        <div className="form-row">
-          {[1, 7, 30].map((d) => (
-            <button key={d} className={`btn ${days === d ? "" : "secondary"}`} onClick={() => setDays(d)}>
-              {d}d
-            </button>
-          ))}
-        </div>
-        {chartData.length === 0 ? (
-          <p>No price points recorded yet in this range.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#bfe0fb" />
-              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#4c6b8a" }} minTickGap={30} />
-              <YAxis tick={{ fontSize: 11, fill: "#4c6b8a" }} domain={["auto", "auto"]} />
-              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #bfe0fb" }} />
-              <Line type="monotone" dataKey="price" stroke="#2196f3" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {/* Sits below the chart: it's the "which product should I look at?" list, so the
-          graph it feeds is what should be on screen first. */}
+      {/* The variations list comes first — it's the "which product should I look at?"
+          view — and its View graph buttons scroll down to the chart below. */}
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           <h3 style={{ margin: 0 }}>Price variations</h3>
@@ -257,6 +225,38 @@ export default function PriceAnalytics() {
               </tbody>
             </table>
           </div>
+        )}
+      </div>
+
+      {history?.stats24h && (
+        <div className="stat-row">
+          <div className="stat"><div className="label">24h min</div><div className="value">₹{history.stats24h.min}</div></div>
+          <div className="stat"><div className="label">24h max</div><div className="value">₹{history.stats24h.max}</div></div>
+          <div className="stat"><div className="label">24h avg</div><div className="value">₹{history.stats24h.avg}</div></div>
+          <div className="stat"><div className="label">samples</div><div className="value">{history.stats24h.samples}</div></div>
+        </div>
+      )}
+
+      <div className="card" ref={chartRef}>
+        <div className="form-row">
+          {[1, 7, 30].map((d) => (
+            <button key={d} className={`btn ${days === d ? "" : "secondary"}`} onClick={() => setDays(d)}>
+              {d}d
+            </button>
+          ))}
+        </div>
+        {chartData.length === 0 ? (
+          <p>No price points recorded yet in this range.</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#bfe0fb" />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#4c6b8a" }} minTickGap={30} />
+              <YAxis tick={{ fontSize: 11, fill: "#4c6b8a" }} domain={["auto", "auto"]} />
+              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #bfe0fb" }} />
+              <Line type="monotone" dataKey="price" stroke="#2196f3" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         )}
       </div>
     </div>
