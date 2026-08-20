@@ -61,7 +61,7 @@ export const api = {
   getAllStats: (from, to) =>
     request(`/products/stats${from && to ? `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` : ""}`),
   getStockEvents: (id) => request(`/products/${id}/stock-events`),
-  getAllStockEvents: () => request("/products/stock-events"),
+  getAllStockEvents: (hours = 24) => request(`/products/stock-events?hours=${hours}`),
   checkNow: (id) => request(`/products/${id}/check-now`, { method: "POST" }),
   checkAll: () => request("/products/check-all", { method: "POST" }),
 

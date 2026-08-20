@@ -40,12 +40,12 @@ function todayStr() {
 // feed of every stock-status change across all products, not just a current snapshot
 // (the Flagged table above only shows what's flagged *right now*, with no trace of
 // when it happened or what changed before it).
-function RecentStockChanges({ siteFilter, activityCutoff }) {
+function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: events = [], isLoading, error } = useQuery({
-    queryKey: ["stockEvents", "recent"],
-    queryFn: api.getAllStockEvents,
+    queryKey: ["stockEvents", "recent", hours],
+    queryFn: () => api.getAllStockEvents(hours),
   });
 
   const filtered = useMemo(
@@ -267,7 +267,7 @@ export default function PriceStockVariation() {
         )}
       </div>
 
-      <RecentStockChanges siteFilter={siteFilter} activityCutoff={activityCutoff} />
+      <RecentStockChanges siteFilter={siteFilter} activityCutoff={activityCutoff} hours={ACTIVITY_RANGES.find((r) => r.key === activityRange).hours} />
 
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
