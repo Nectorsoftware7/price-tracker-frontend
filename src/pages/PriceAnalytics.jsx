@@ -59,7 +59,7 @@ export default function PriceAnalytics() {
     enabled: Boolean(productId),
   });
   if (loading) return <Loader />;
-  if (products.length === 0) return <p style={{ color: "#4c6b8a" }}>No products tracked yet — add one on the Products page first.</p>;
+  if (products.length === 0) return <p style={{ color: "#487474" }}>No products tracked yet — add one on the Products page first.</p>;
 
   function matchesFilters(p, stock, site) {
     return (stock === "all" || (p.lastStock || "unknown") === stock) && (site === "all" || p.site === site);
@@ -108,7 +108,7 @@ export default function PriceAnalytics() {
   return (
     <div>
       <h2>Price Analytics</h2>
-      <p style={{ color: "#4c6b8a", marginTop: -8 }}>Pick any tracked product to see its price history and stock timeline.</p>
+      <p style={{ color: "#487474", marginTop: -8 }}>Pick any tracked product to see its price history and stock timeline.</p>
 
       <div className="card">
         <div className="form-row">
@@ -129,7 +129,7 @@ export default function PriceAnalytics() {
           </select>
         </div>
         {filteredProducts.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>No products match this stock status.</p>
+          <p style={{ color: "#487474" }}>No products match this stock status.</p>
         ) : (
         <select
           value={productId ?? ""}
@@ -179,7 +179,7 @@ export default function PriceAnalytics() {
         </div>
 
         {priceVariations.length === 0 ? (
-          <p style={{ color: "#4c6b8a", marginTop: 12 }}>
+          <p style={{ color: "#487474", marginTop: 12 }}>
             No price has moved in the last {VARIATION_RANGES.find((r) => r.key === variationRange).label}.
           </p>
         ) : (
@@ -260,11 +260,11 @@ export default function PriceAnalytics() {
         ) : (
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#bfe0fb" />
-              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#4c6b8a" }} minTickGap={30} />
-              <YAxis tick={{ fontSize: 11, fill: "#4c6b8a" }} domain={["auto", "auto"]} />
-              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #bfe0fb" }} />
-              <Line type="monotone" dataKey="price" stroke="#2196f3" strokeWidth={2} dot={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#cfe6e4" />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#487474" }} minTickGap={30} />
+              <YAxis tick={{ fontSize: 11, fill: "#487474" }} domain={["auto", "auto"]} />
+              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #cfe6e4" }} />
+              <Line type="monotone" dataKey="price" stroke="#007979" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}

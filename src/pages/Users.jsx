@@ -92,7 +92,7 @@ export default function Users() {
   return (
     <div>
       <h2>Users</h2>
-      <p style={{ color: "#4c6b8a", marginTop: -8 }}>
+      <p style={{ color: "#487474", marginTop: -8 }}>
         Anyone who signs in with Google for the first time shows up here waiting for a role before they get dashboard access.
       </p>
 
@@ -101,7 +101,7 @@ export default function Users() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>⏳ Pending review</h3>
         {pending.length === 0 ? (
-          <p style={{ color: "#4c6b8a", margin: 0 }}>No accounts waiting for approval.</p>
+          <p style={{ color: "#487474", margin: 0 }}>No accounts waiting for approval.</p>
         ) : (
           <div className="table-scroll">
             <table>

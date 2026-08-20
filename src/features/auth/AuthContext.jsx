@@ -73,7 +73,7 @@ export function AuthProvider({ children }) {
         <div className="viewer-blocked-overlay" onClick={() => setViewerBlockedOpen(false)}>
           <div className="viewer-blocked-modal" onClick={(e) => e.stopPropagation()}>
             <h3 style={{ marginTop: 0 }}>View-only account</h3>
-            <p style={{ color: "#4c6b8a" }}>
+            <p style={{ color: "#487474" }}>
               This account is only for viewing. Editing, deleting, adding, and other write actions are disabled.
             </p>
             <button className="btn" onClick={() => setViewerBlockedOpen(false)}>OK</button>

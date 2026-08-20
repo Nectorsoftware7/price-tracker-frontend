@@ -34,15 +34,15 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
       <div className="form-row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
         <div>
           <strong>{submission.name || "Unknown"}</strong>
-          {submission.email && <span style={{ color: "#4c6b8a" }}> — {submission.email}</span>}
-          {submission.phone && <span style={{ color: "#4c6b8a" }}> — {submission.phone}</span>}
+          {submission.email && <span style={{ color: "#487474" }}> — {submission.email}</span>}
+          {submission.phone && <span style={{ color: "#487474" }}> — {submission.phone}</span>}
         </div>
-        <span style={{ color: "#4c6b8a", fontSize: 12 }}>{new Date(submission.createdAt).toLocaleString()}</span>
+        <span style={{ color: "#487474", fontSize: 12 }}>{new Date(submission.createdAt).toLocaleString()}</span>
       </div>
 
       {/* Customer message bubble */}
-      <div style={{ background: "#e3f2fd", borderRadius: 8, padding: "10px 14px", marginBottom: 10, maxWidth: "80%" }}>
-        {submission.message || <em style={{ color: "#4c6b8a" }}>No message text found</em>}
+      <div style={{ background: "#e4f2f1", borderRadius: 8, padding: "10px 14px", marginBottom: 10, maxWidth: "80%" }}>
+        {submission.message || <em style={{ color: "#487474" }}>No message text found</em>}
       </div>
 
       {/* AI reply bubble */}
@@ -68,7 +68,7 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
       {submission.manualReply && (
         <div
           style={{
-            background: "#d6e9fb",
+            background: "#dbeeee",
             borderRadius: 8,
             padding: "10px 14px",
             marginBottom: 10,
@@ -76,7 +76,7 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
             marginLeft: "auto",
           }}
         >
-          <div style={{ fontSize: 11, color: "#0d47a1", marginBottom: 4 }}>
+          <div style={{ fontSize: 11, color: "#006969", marginBottom: 4 }}>
             ✍️ Manual reply — {new Date(submission.manualReplySentAt).toLocaleString()}
           </div>
           {submission.manualReply}
@@ -122,7 +122,7 @@ export default function Reviews() {
   return (
     <div>
       <h2>Contact form conversations</h2>
-      <p style={{ color: "#4c6b8a", marginTop: -8 }}>
+      <p style={{ color: "#487474", marginTop: -8 }}>
         Every customer question submitted through the website contact forms, the AI's auto-reply, and a place to send your own reply.
       </p>
 
@@ -140,7 +140,7 @@ export default function Reviews() {
         <Loader />
       ) : filtered.length === 0 ? (
         <div className="card">
-          <p style={{ color: "#4c6b8a", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>
+          <p style={{ color: "#487474", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>
         </div>
       ) : (
         filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} guardAction={guardAction} />)

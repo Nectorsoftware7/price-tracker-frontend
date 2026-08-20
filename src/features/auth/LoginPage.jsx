@@ -100,7 +100,7 @@ export default function LoginPage() {
       <div className="card" style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
         <h2 style={{ marginTop: 0 }}>Your account is under review</h2>
-        <p style={{ color: "#4c6b8a" }}>
+        <p style={{ color: "#487474" }}>
           A superadmin needs to approve dashboard access for your account before you can log in. Try again once you've been notified.
         </p>
         <button className="btn secondary" style={{ width: "100%" }} onClick={() => setBlockedScreen(null)}>
@@ -115,7 +115,7 @@ export default function LoginPage() {
       <div className="card" style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>🚫</div>
         <h2 style={{ marginTop: 0 }}>Your account is suspended</h2>
-        <p style={{ color: "#4c6b8a" }}>Please contact the superadmin to have dashboard access restored.</p>
+        <p style={{ color: "#487474" }}>Please contact the superadmin to have dashboard access restored.</p>
         <button className="btn secondary" style={{ width: "100%" }} onClick={() => setBlockedScreen(null)}>
           Back to login
         </button>
@@ -145,7 +145,7 @@ export default function LoginPage() {
 
       {GOOGLE_CLIENT_ID && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0", color: "#9c5b7c", fontSize: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0", color: "#487474", fontSize: 12 }}>
             <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             OR
             <div style={{ flex: 1, height: 1, background: "var(--border)" }} />

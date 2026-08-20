@@ -72,11 +72,11 @@ function RecentStockChanges({ siteFilter, activityCutoff }) {
         </select>
       </div>
       {isLoading ? (
-        <p style={{ color: "#4c6b8a" }}>Loading…</p>
+        <p style={{ color: "#487474" }}>Loading…</p>
       ) : error ? (
         <p style={{ color: "#a71d1d" }}>{error.message}</p>
       ) : filtered.length === 0 ? (
-        <p style={{ color: "#4c6b8a" }}>No stock changes recorded yet.</p>
+        <p style={{ color: "#487474" }}>No stock changes recorded yet.</p>
       ) : (
         <div className="table-scroll">
           <table>
@@ -222,13 +222,13 @@ export default function PriceStockVariation() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
 
-        <p style={{ color: "#4c6b8a", marginTop: 8 }}>
+        <p style={{ color: "#487474", marginTop: 8 }}>
           <b style={{ color: "var(--text)" }}>{outOfStock.length}</b> out of stock
           {flagged.length - outOfStock.length > 0 && `, ${flagged.length - outOfStock.length} low stock`}
         </p>
 
         {flagged.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>
+          <p style={{ color: "#487474" }}>
             Nothing flagged in the last {ACTIVITY_RANGES.find((r) => r.key === activityRange).label.toLowerCase()}.
           </p>
         ) : (
@@ -283,11 +283,11 @@ export default function PriceStockVariation() {
         </div>
 
         <div className="form-row" style={{ alignItems: "center", marginTop: 12 }}>
-          <label style={{ fontSize: 13, color: "#4c6b8a" }}>
+          <label style={{ fontSize: 13, color: "#487474" }}>
             From{" "}
             <input type="date" value={fromDate} max={toDate || todayStr()} onChange={(e) => setFromDate(e.target.value)} />
           </label>
-          <label style={{ fontSize: 13, color: "#4c6b8a" }}>
+          <label style={{ fontSize: 13, color: "#487474" }}>
             To{" "}
             <input type="date" value={toDate} min={fromDate} max={todayStr()} onChange={(e) => setToDate(e.target.value)} />
           </label>
@@ -299,7 +299,7 @@ export default function PriceStockVariation() {
         </div>
 
         {varied.length === 0 ? (
-          <p style={{ color: "#4c6b8a", marginTop: 12 }}>
+          <p style={{ color: "#487474", marginTop: 12 }}>
             No price has moved {useCustomRange ? "in the selected date range" : "in the last 24 hours"}.
           </p>
         ) : (

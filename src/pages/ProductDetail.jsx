@@ -53,11 +53,11 @@ export default function ProductDetail() {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#bfe0fb" />
-              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#4c6b8a" }} minTickGap={30} />
-              <YAxis tick={{ fontSize: 11, fill: "#4c6b8a" }} domain={["auto", "auto"]} />
-              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #bfe0fb" }} />
-              <Line type="monotone" dataKey="price" stroke="#2196f3" strokeWidth={2} dot={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#cfe6e4" />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#487474" }} minTickGap={30} />
+              <YAxis tick={{ fontSize: 11, fill: "#487474" }} domain={["auto", "auto"]} />
+              <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #cfe6e4" }} />
+              <Line type="monotone" dataKey="price" stroke="#007979" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}

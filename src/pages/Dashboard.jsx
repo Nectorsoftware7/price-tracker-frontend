@@ -23,7 +23,7 @@ const STATUS_COLORS = {
   in_stock: "#1c7a3c",
   low_stock: "#a15c00",
   out_of_stock: "#a71d1d",
-  unknown: "#9c5b7c",
+  unknown: "#487474",
 };
 const STATUS_LABELS = {
   in_stock: "In stock",
@@ -35,7 +35,7 @@ const STATUS_LABELS = {
 // Brand accent (--blue-500) for the two bar charts — a single-series bar doesn't carry
 // "identity" the way a multi-series chart does, so one consistent hue is correct rather
 // than a hue-per-bar; the axis labels already say which site is which.
-const BAR_COLOR = "#f62477";
+const BAR_COLOR = "#24b1b1";
 const PROBLEM_BAR_COLOR = STATUS_COLORS.out_of_stock;
 
 // Bar charts pass `label` (the axis category); Pie has no axis, so its own slice name
@@ -89,18 +89,18 @@ export default function Dashboard() {
   return (
     <div>
       <h2>Dashboard</h2>
-      <p style={{ color: "#4c6b8a", marginTop: -8 }}>A quick visual overview across every tracked product.</p>
+      <p style={{ color: "#487474", marginTop: -8 }}>A quick visual overview across every tracked product.</p>
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Products per site</h3>
         {siteCounts.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>No products tracked yet.</p>
+          <p style={{ color: "#487474" }}>No products tracked yet.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={siteCounts} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="site" tick={{ fontSize: 12, fill: "var(--text)" }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#487474" }} />
               <Tooltip content={<CustomTooltip formatter={(v) => `${v} product${v === 1 ? "" : "s"}`} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
               <Bar dataKey="count" fill={BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={56} />
             </BarChart>
@@ -110,15 +110,15 @@ export default function Dashboard() {
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Out-of-stock count per site</h3>
-        <p style={{ color: "#4c6b8a", marginTop: -8, fontSize: 13 }}>Which site is causing the most out-of-stock listings right now.</p>
+        <p style={{ color: "#487474", marginTop: -8, fontSize: 13 }}>Which site is causing the most out-of-stock listings right now.</p>
         {outOfStockBySite.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>Nothing out of stock — every tracked product is available.</p>
+          <p style={{ color: "#487474" }}>Nothing out of stock — every tracked product is available.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={outOfStockBySite} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="site" tick={{ fontSize: 12, fill: "var(--text)" }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#4c6b8a" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#487474" }} />
               <Tooltip content={<CustomTooltip formatter={(v) => `${v} out of stock`} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
               <Bar dataKey="count" fill={PROBLEM_BAR_COLOR} radius={[4, 4, 0, 0]} maxBarSize={56} />
             </BarChart>
@@ -128,9 +128,9 @@ export default function Dashboard() {
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Overall stock-status distribution</h3>
-        <p style={{ color: "#4c6b8a", marginTop: -8, fontSize: 13 }}>{totalProducts} products tracked in total.</p>
+        <p style={{ color: "#487474", marginTop: -8, fontSize: 13 }}>{totalProducts} products tracked in total.</p>
         {statusDistribution.length === 0 ? (
-          <p style={{ color: "#4c6b8a" }}>No products tracked yet.</p>
+          <p style={{ color: "#487474" }}>No products tracked yet.</p>
         ) : (
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
