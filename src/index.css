@@ -1,25 +1,16 @@
 :root {
-  /* Palette: deep teal (#007979) -> teal (#24B1B1) -> cream -> peach, per the provided
-     reference swatch. Variable names stay as "--blue-*" because most of the stylesheet
-     already references them — only the values changed. (They have never actually held
-     blue; the names are historical.) */
-  --blue-50: #fdf2e9;   /* page ground — the cream band */
-  --blue-200: #fbdcc0;  /* peach band — secondary button fills */
-  /* The swatch's bright teal (#24B1B1) is too light to carry white text — measured at
-     2.6:1, well under the 4.5:1 needed for body-size text. So solid fills that print
-     white on top use the deep teal, and the bright teal is kept for marks read against
-     the page rather than under text: chart lines, the accent bar, focus rings. */
-  --teal-bright: #24b1b1;
-  --blue-500: #007979;  /* solid fills with white text — buttons, active nav, avatar */
-  --blue-900: #005e5e;  /* darker teal — navbar, headings, hover states */
+  /* Palette: dark maroon (#7D0038) -> hot pink (#F62477) -> light pink -> light yellow */
+  --blue-50: #fff7f0;     /* page background — warm cream-yellow */
+  --blue-200: #f9b8cf;    /* light pink — secondary button fills */
+  --teal-bright: #f62477; /* hot pink — accent, chart lines, focus rings */
+  --blue-500: #c41055;    /* deep pink/crimson — buttons, active nav, avatar */
+  --blue-900: #7d0038;    /* dark maroon — navbar, headings, hover states */
   --white: #ffffff;
-  /* Neutrals biased toward the accent rather than a flat grey, so text sits in the same
-     family as the teal instead of reading as a separate palette. */
-  --text: #0c2f2f;
-  --text-muted: #487474;
-  --border: #cfe6e4;
-  --navbar-bg: #007979;
-  --navbar-bg-hover: #005e5e;
+  --text: #2d0015;
+  --text-muted: #8b3055;
+  --border: #f0c0d0;
+  --navbar-bg: #7d0038;
+  --navbar-bg-hover: #5c002a;
 }
 
 * { box-sizing: border-box; }
@@ -27,7 +18,7 @@
 .viewer-blocked-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 34, 34, 0.45);
+  background: rgba(125, 0, 56, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,7 +31,7 @@
   padding: 24px;
   max-width: 360px;
   width: 100%;
-  box-shadow: 0 12px 40px rgba(6, 34, 34, 0.25);
+  box-shadow: 0 12px 40px rgba(125, 0, 56, 0.25);
 }
 .viewer-blocked-modal .btn {
   width: 100%;
@@ -118,7 +109,7 @@ a { color: var(--blue-900); }
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 63, 63, 0.18);
+  box-shadow: 0 4px 16px rgba(125, 0, 56, 0.18);
   padding: 12px;
   width: 200px;
   z-index: 40;
@@ -185,7 +176,7 @@ a { color: var(--blue-900); }
   border-radius: 10px;
   padding: 18px 20px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 63, 63, 0.08);
+  box-shadow: 0 1px 3px rgba(125, 0, 56, 0.08);
 }
 
 /* Column widths are set via <colgroup> in the JSX now (the one thing table-layout:
@@ -333,7 +324,7 @@ input[type="date"] {
     background: var(--white);
     border-top: 1px solid var(--border);
     padding: 6px 2px calc(6px + env(safe-area-inset-bottom));
-    box-shadow: 0 -2px 10px rgba(0, 63, 63, 0.08);
+    box-shadow: 0 -2px 10px rgba(125, 0, 56, 0.08);
   }
   .bottom-nav a {
     flex: 1;
@@ -386,7 +377,7 @@ input[type="date"] {
   height: 52px;
   border-radius: 50%;
   background: conic-gradient(from 0deg, var(--blue-500), var(--blue-900), var(--blue-200), var(--blue-500));
-  box-shadow: 0 6px 18px rgba(0, 63, 63, 0.25);
+  box-shadow: 0 6px 18px rgba(125, 0, 56, 0.25);
   animation: loader-spin 0.9s linear infinite;
   position: relative;
 }
