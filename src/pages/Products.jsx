@@ -61,8 +61,17 @@ export default function Products() {
       // its own invalidate() afterward updates that once it's ready.
       flashSuccess(wasEditing ? "✅ Product updated" : "✅ Product added");
       invalidate();
-      await api.checkNow(product._id);
-      invalidate();
+      // checkNow silently fails for sites handled by local worker (meesho etc.) —
+      // local worker picks them up within 2 minutes automatically
+      try {
+        await api.checkNow(product._id);
+        invalidate();
+      } catch (checkErr) {
+        if (!checkErr.message?.includes("blocked from this server")) {
+          setError(checkErr.message);
+        }
+        invalidate();
+      }
     } catch (err) {
       setError(err.message);
       setAdding(false);
@@ -97,7 +106,11 @@ export default function Products() {
       await api.checkNow(id);
       await invalidate();
     } catch (err) {
-      setError(err.message);
+      if (err.message?.includes("blocked from this server")) {
+        flashSuccess("⏳ Local worker se update hoga (2 min mein)");
+      } else {
+        setError(err.message);
+      }
     } finally {
       setBusyId(null);
     }
