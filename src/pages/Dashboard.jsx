@@ -77,24 +77,64 @@ function CustomTooltip({ active, payload, label, formatter }) {
 // The hue is the one thing that legitimately differs: out-of-stock is a *status*, and
 // its red is the same red the badge uses on every other page, so recolouring it to the
 // brand teal would throw away meaning the reader already knows how to read.
-function SiteBarChart({ title, subtitle, data, color, emptyText, formatter }) {
+function SiteBarChart({ title, subtitle, data, color, emptyText, formatter, narrow }) {
+  const tooltip = <Tooltip content={<CustomTooltip formatter={formatter} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />;
+
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>{title}</h3>
       <p style={{ color: "var(--text-muted)", marginTop: -8, fontSize: 13 }}>{subtitle}</p>
       {data.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>{emptyText}</p>
+      ) : narrow ? (
+        // Bars turn horizontal on a phone, which is a change of form rather than of
+        // styling. Columns need a label under each one, and nine sites across ~300px
+        // leaves about 33px apiece while "woocommerce" wants 59 even tilted — the names
+        // were clipping and running together. Given a row each they simply fit.
+        <ResponsiveContainer width="100%" height={data.length * 30 + 44}>
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 34, left: 4, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+            <XAxis
+              type="number"
+              allowDecimals={false}
+              tick={{ fontSize: 10.5, fill: "var(--text-muted)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="site"
+              width={84}
+              tick={{ fontSize: 10.5, fill: "var(--text)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            {tooltip}
+            <Bar dataKey="count" fill={color} radius={[0, 4, 4, 0]} maxBarSize={18}>
+              <LabelList dataKey="count" position="right" fill="var(--text-muted)" fontSize={10.5} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" height={280}>
-          {/* Top margin leaves room for the value labels, which sit above each bar. */}
-          <BarChart data={data} margin={{ top: 20, right: 12, left: 0, bottom: 4 }}>
+        <ResponsiveContainer width="100%" height={296}>
+          {/* Top margin leaves room for the value labels above each bar; the bottom one
+              for the tilted site names below. */}
+          <BarChart data={data} margin={{ top: 20, right: 12, left: 0, bottom: 26 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-            {/* interval={0} keeps every site named — at half width recharts would
-                otherwise start dropping labels to avoid overlap. */}
+            {/* interval={0} keeps every site named — left alone, recharts drops labels
+                until the rest fit, and a bar with no name is not much use.
+
+                Which means the names have to fit some other way. At half width nine
+                categories get about 46px each, and "woocommerce" needs roughly 72, so
+                horizontal text ran into its neighbours. Tilting buys each label the full
+                diagonal instead, and costs only a little vertical room. */}
             <XAxis
               dataKey="site"
               interval={0}
-              tick={{ fontSize: 11, fill: "var(--text)" }}
+              angle={-35}
+              textAnchor="end"
+              height={44}
+              tick={{ fontSize: 10.5, fill: "var(--text)" }}
               tickLine={false}
               axisLine={{ stroke: "var(--border)" }}
             />
@@ -105,7 +145,7 @@ function SiteBarChart({ title, subtitle, data, color, emptyText, formatter }) {
               tickLine={false}
               axisLine={false}
             />
-            <Tooltip content={<CustomTooltip formatter={formatter} />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+            {tooltip}
             <Bar dataKey="count" fill={color} radius={[4, 4, 0, 0]} maxBarSize={44}>
               {/* Few enough bars that labelling every one stays quiet, and it saves a
                   hover just to read a count off the axis. */}
@@ -367,6 +407,7 @@ export default function Dashboard() {
           color={BAR_COLOR}
           emptyText="No products tracked yet."
           formatter={(v) => `${v} product${v === 1 ? "" : "s"}`}
+          narrow={narrow}
         />
         <SiteBarChart
           title="Out-of-stock count per site"
@@ -375,6 +416,7 @@ export default function Dashboard() {
           color={PROBLEM_BAR_COLOR}
           emptyText="Nothing out of stock — every tracked product is available."
           formatter={(v) => `${v} out of stock`}
+          narrow={narrow}
         />
       </div>
 
