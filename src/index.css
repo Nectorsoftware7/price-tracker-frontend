@@ -155,7 +155,20 @@ a { color: var(--blue-900); }
    loading spinner). On a page whose content is naturally taller than the viewport,
    that flex-grow has no extra space to fill, so the footer just sits at the true end
    of that content instead — reachable by scrolling, not pinned on top of it. */
-.main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 28px 36px; max-width: 1100px; display: flex; flex-direction: column; min-height: 100%; }
+/* The scrolling element is the full grid column, and the 1100px cap moved onto its
+   children. It used to sit on .main itself, which made the scroller stop wherever the
+   cap landed — on a 1920px screen that was 1300px in, leaving the scrollbar floating
+   620px short of the window edge with empty page beside it. The reading width is
+   unchanged; only the scrollbar moved to where a scrollbar belongs. */
+.main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 28px 36px; display: flex; flex-direction: column; min-height: 100%; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.main > * { width: 100%; max-width: 1100px; }
+
+/* WebKit ignores scrollbar-width/-color, so the same slim treatment is spelled out for
+   it. Both keep a real 10px target — a hairline scrollbar is hard to grab. */
+.main::-webkit-scrollbar { width: 10px; }
+.main::-webkit-scrollbar-track { background: transparent; }
+.main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+.main::-webkit-scrollbar-thumb:hover { background: var(--blue-200); }
 .main h2 { color: var(--blue-900); }
 .main > *:first-child { flex: 1 0 auto; }
 
