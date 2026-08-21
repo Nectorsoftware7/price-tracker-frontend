@@ -536,3 +536,18 @@ input[type="date"] {
   border-radius: 50%;
   display: inline-block;
 }
+
+/* The site charts keep their column form on a phone and scroll sideways instead of
+   being squeezed. The bar is left visible rather than relying on an overlay scrollbar
+   that only appears once you already guessed there was more to see. */
+.chart-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  padding-bottom: 4px;
+}
+.chart-scroll::-webkit-scrollbar { height: 8px; }
+.chart-scroll::-webkit-scrollbar-track { background: transparent; }
+.chart-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.chart-scroll::-webkit-scrollbar-thumb:hover { background: var(--blue-200); }
