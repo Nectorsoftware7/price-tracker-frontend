@@ -559,3 +559,28 @@ input[type="date"] {
 .chart-scroll::-webkit-scrollbar-track { background: transparent; }
 .chart-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .chart-scroll::-webkit-scrollbar-thumb:hover { background: var(--blue-200); }
+
+/* Sortable column headers. The whole cell is the target rather than the label alone, so
+   the click area matches what looks clickable. */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--blue-500); }
+th.sortable.sorted { color: var(--blue-900); }
+th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: -2px; }
+.sort-arrow { display: inline-block; width: 12px; font-size: 11px; }
+
+/* A price sitting under its floor. The alert fires once when it crosses, so this is what
+   carries the ongoing state. Bold as well as coloured — colour alone would be the only
+   signal otherwise. */
+.below-target {
+  color: #a71d1d; /* same red the out-of-stock badge uses */
+  font-weight: 700;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+.pager-status { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }

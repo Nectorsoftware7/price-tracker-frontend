@@ -10,7 +10,25 @@ import { useAuth } from "../features/auth/AuthContext.jsx";
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
 // the form only ever needs a name, site, and URL.
-const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "", productGroup: "" };
+// A header that sorts. The arrow only appears on the column actually in use — showing a
+// neutral marker on every column makes the active one harder to spot, not easier.
+// aria-sort is what tells a screen reader the same thing the arrow tells everyone else.
+function SortableTh({ label, sortKey, sort, onSort }) {
+  const active = sort.key === sortKey;
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      className={`sortable${active ? " sorted" : ""}`}
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+      title={`Sort by ${label.toLowerCase()}`}
+    >
+      {label}
+      <span className="sort-arrow">{active ? (sort.dir === "asc" ? "↑" : "↓") : ""}</span>
+    </th>
+  );
+}
+
+const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "", productGroup: "", targetPrice: "" };
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle", "myntra"];
 
 export default function Products() {
@@ -35,6 +53,9 @@ export default function Products() {
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkCheckProgress, setBulkCheckProgress] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState({ key: "name", dir: "asc" });
+  const [page, setPage] = useState(1);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
@@ -86,6 +107,7 @@ export default function Products() {
       url: product.url,
       flipkartSku: product.flipkartSku || "",
       productGroup: product.productGroup || "",
+      targetPrice: product.targetPrice ?? "",
     });
     // The page itself never scrolls (body { overflow: hidden }) — .main is the actual
     // scrolling container, so window.scrollTo was a no-op. scrollIntoView finds
@@ -234,6 +256,74 @@ export default function Products() {
     }
   }
 
+  const PAGE_SIZE = 25;
+
+  // filter -> search -> sort, all before paging, so a search covers every product rather
+  // than only the page currently on screen.
+  const matching = products
+    .filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter)
+    .filter((p) => siteFilter === "all" || p.site === siteFilter)
+    .filter((p) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return `${p.name} ${p.site} ${p.productGroup || ""}`.toLowerCase().includes(q);
+    });
+
+  // Missing values sort last whichever way the column is pointing: a product with no
+  // price yet is not "the cheapest", and floating it to the top of an ascending sort
+  // would bury the row someone actually wanted.
+  const sorted = [...matching].sort((a, b) => {
+    const dir = sort.dir === "asc" ? 1 : -1;
+    const pick = (p) => {
+      if (sort.key === "price") return p.lastPrice;
+      if (sort.key === "target") return p.targetPrice;
+      if (sort.key === "checked") return p.lastCheckedAt ? new Date(p.lastCheckedAt).getTime() : null;
+      if (sort.key === "stock") return p.lastStock || "unknown";
+      if (sort.key === "site") return p.site;
+      return p.name;
+    };
+    const x = pick(a);
+    const y = pick(b);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    if (typeof x === "string") return x.localeCompare(y) * dir;
+    return (x - y) * dir;
+  });
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  // Narrowing the search can leave the current page past the end of the results, which
+  // would show an empty table rather than the matches.
+  const currentPage = Math.min(page, pageCount);
+  const visible = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  function toggleSort(key) {
+    setSort((prev) => ({ key, dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc" }));
+    setPage(1);
+  }
+
+  // Exports everything the current filters and search match, not just the page on screen
+  // — the button sits under a paged table, so the distinction has to be deliberate. The
+  // note beside it says which.
+  function handleExport() {
+    const rows = sorted.map((p) => ({
+      Name: p.name,
+      Platform: p.site,
+      "Product group": p.productGroup || "",
+      "Last price": p.lastPrice ?? "",
+      "Target price": p.targetPrice ?? "",
+      "Below target": p.targetPrice != null && p.lastPrice != null && p.lastPrice < p.targetPrice ? "yes" : "",
+      Stock: p.lastStock || "unknown",
+      "Stock quantity": p.lastStockQuantity ?? "",
+      "Last checked": p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never",
+      Link: p.url,
+    }));
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Products");
+    XLSX.writeFile(book, `price-tracker-products-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div>
       <h2>Tracked products</h2>
@@ -304,6 +394,17 @@ export default function Products() {
               value={form.productGroup}
               onChange={(e) => setForm({ ...form, productGroup: e.target.value })}
               list="product-groups"
+            />
+            {/* The floor this listing should not be discounted below. Left empty means no
+                floor — see the model, which turns "" into NULL rather than 0. */}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Target price ₹ (optional — alert if it drops below)"
+              style={{ flex: "1 1 260px", minWidth: 0 }}
+              value={form.targetPrice}
+              onChange={(e) => setForm({ ...form, targetPrice: e.target.value })}
             />
             {/* Existing groups, so a second listing is picked from the list rather than
                 retyped — a typo would silently split the pair instead of joining it. */}
@@ -379,28 +480,52 @@ export default function Products() {
           <p>No products tracked yet — add one above.</p>
         ) : (
           <>
-            <div className="form-row" style={{ justifyContent: "space-between" }}>
-              <div className="form-row">
-                <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
-                  <option value="all">All stock statuses</option>
-                  <option value="in_stock">In stock</option>
-                  <option value="low_stock">Low stock</option>
-                  <option value="out_of_stock">Out of stock</option>
-                  <option value="unknown">Unknown</option>
-                </select>
-                <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)}>
-                  <option value="all">All sites</option>
-                  {SITE_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* One row rather than nested ones: the filters, the search and the two
+                actions all belong to the same toolbar, and nesting them made the row
+                wrap into two lines well before it ran out of width. The search is the
+                only thing that grows, since it is the only one whose useful size varies
+                with the space available. */}
+            <div className="form-row">
+              <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value); setPage(1); }}>
+                <option value="all">All stock statuses</option>
+                <option value="in_stock">In stock</option>
+                <option value="low_stock">Low stock</option>
+                <option value="out_of_stock">Out of stock</option>
+                <option value="unknown">Unknown</option>
+              </select>
+              <select value={siteFilter} onChange={(e) => { setSiteFilter(e.target.value); setPage(1); }}>
+                <option value="all">All sites</option>
+                {SITE_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="search"
+                placeholder="Search name, platform or group"
+                style={{ flex: "1 1 200px", minWidth: 0 }}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+              <button className="btn secondary" onClick={handleExport} disabled={sorted.length === 0}>
+                Export to Excel
+              </button>
               <button className="btn" disabled={checkingAll} onClick={guardAction(handleCheckAll)}>
                 {checkingAll ? "Checking all products..." : "Check all products"}
               </button>
             </div>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "2px 0 8px" }}>
+              {sorted.length === products.length
+                ? `${products.length} products`
+                : `${sorted.length} of ${products.length} products match`}
+              {sorted.length > PAGE_SIZE
+                ? ` — showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, sorted.length)}. Export takes all ${sorted.length}.`
+                : ""}
+            </p>
             <div className="table-scroll">
             <table className="table-products">
             {/* Explicit per-column pixel widths (rather than CSS percentages) guarantee
@@ -413,26 +538,25 @@ export default function Products() {
             <colgroup>
               <col style={{ width: 220 }} />
               <col style={{ width: 80 }} />
-              <col style={{ width: 80 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
               <col style={{ width: 100 }} />
               <col style={{ width: 150 }} />
               <col style={{ width: 280 }} />
             </colgroup>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Site</th>
-                <th>Last price</th>
-                <th>Stock</th>
-                <th>Last checked</th>
+                <SortableTh label="Name" sortKey="name" sort={sort} onSort={toggleSort} />
+                <SortableTh label="Site" sortKey="site" sort={sort} onSort={toggleSort} />
+                <SortableTh label="Last price" sortKey="price" sort={sort} onSort={toggleSort} />
+                <SortableTh label="Target" sortKey="target" sort={sort} onSort={toggleSort} />
+                <SortableTh label="Stock" sortKey="stock" sort={sort} onSort={toggleSort} />
+                <SortableTh label="Last checked" sortKey="checked" sort={sort} onSort={toggleSort} />
                 <th style={{ textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products
-                .filter((p) => stockFilter === "all" || (p.lastStock || "unknown") === stockFilter)
-                .filter((p) => siteFilter === "all" || p.site === siteFilter)
-                .map((p) => (
+              {visible.map((p) => (
                 <tr key={p._id}>
                   {/* The name opens the actual listing on the marketplace — that's what
                       you want when checking "is this really out of stock?". The tracker's
@@ -452,6 +576,19 @@ export default function Products() {
                   </td>
                   <td>{p.site}</td>
                   <td>{p.lastPrice != null ? `₹${p.lastPrice}` : "—"}</td>
+                  {/* A breach is a state, not an event: the Telegram alert fires once on
+                      the crossing, so this is what shows it is still under. */}
+                  <td>
+                    {p.targetPrice == null ? (
+                      "—"
+                    ) : p.lastPrice != null && p.lastPrice < p.targetPrice ? (
+                      <span className="below-target" title={`₹${Math.round((p.targetPrice - p.lastPrice) * 100) / 100} below target`}>
+                        ₹{p.targetPrice}
+                      </span>
+                    ) : (
+                      `₹${p.targetPrice}`
+                    )}
+                  </td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>
                   <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
@@ -466,6 +603,28 @@ export default function Products() {
             </tbody>
             </table>
             </div>
+            {pageCount > 1 && (
+              <div className="pager">
+                <button className="btn secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+                  Previous
+                </button>
+                <span className="pager-status">
+                  Page {currentPage} of {pageCount}
+                </span>
+                <button
+                  className="btn secondary"
+                  disabled={currentPage === pageCount}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+            {sorted.length === 0 && (
+              <p style={{ color: "var(--text-muted)" }}>
+                Nothing matches those filters{search ? ` and “${search}”` : ""}.
+              </p>
+            )}
           </>
         )}
       </div>
