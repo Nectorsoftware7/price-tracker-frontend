@@ -60,6 +60,7 @@ export const api = {
   // product — see PricePoint.statsForAllProducts on the server for why that mattered.
   getAllStats: (from, to) =>
     request(`/products/stats${from && to ? `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` : ""}`),
+  getDashboard: (days = 14) => request(`/products/dashboard?days=${days}`),
   getStockEvents: (id) => request(`/products/${id}/stock-events`),
   getAllStockEvents: (hours = 24) => request(`/products/stock-events?hours=${hours}`),
   checkNow: (id) => request(`/products/${id}/check-now`, { method: "POST" }),

@@ -433,3 +433,56 @@ input[type="date"] {
   display: block;
   flex: none;
 }
+
+/* KPI row. A stat tile is the right form when the answer is one number — a chart around
+   it would be decoration. auto-fit lets four tiles sit in a row on desktop and fold to
+   two, then one, without a breakpoint per step. */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(125, 0, 56, 0.08);
+}
+.stat-tile-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-tile-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--blue-900);
+  line-height: 1.15;
+}
+.stat-tile-note { font-size: 12px; color: var(--text-muted); }
+
+/* The donut's centre label. pointer-events:none matters — the node sits over the arcs,
+   and without it the middle of the chart would swallow hover and kill the tooltip. */
+.donut-centre {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.donut-centre-value {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--blue-900);
+  line-height: 1;
+}
+.donut-centre-label { font-size: 12px; color: var(--text-muted); }
