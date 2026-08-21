@@ -98,6 +98,7 @@ export default function Products() {
   const [page, setPage] = useState(1);
   const [targetDrafts, setTargetDrafts] = useState({});
   const [savingTarget, setSavingTarget] = useState(null);
+  const tableTopRef = useRef(null);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
@@ -359,6 +360,20 @@ export default function Products() {
   const currentPage = Math.min(page, pageCount);
   const visible = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  // Paging swaps 25 rows out from under the reader while the viewport stays where it
+  // was, which on page two lands them in the middle of a fresh list with the top of it
+  // scrolled off. Moving back to the head of the table is what makes the new page
+  // readable from its first row.
+  function goToPage(next) {
+    setPage(next);
+    tableTopRef.current?.scrollIntoView({
+      // Someone who has asked the system to reduce motion should not be flung up the
+      // page; they still get taken there, just without the travel.
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
   function toggleSort(key) {
     setSort((prev) => ({ key, dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc" }));
     setPage(1);
@@ -547,7 +562,7 @@ export default function Products() {
                 wrap into two lines well before it ran out of width. The search is the
                 only thing that grows, since it is the only one whose useful size varies
                 with the space available. */}
-            <div className="form-row">
+            <div className="form-row" ref={tableTopRef}>
               <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value); setPage(1); }}>
                 <option value="all">All stock statuses</option>
                 <option value="in_stock">In stock</option>
@@ -666,7 +681,7 @@ export default function Products() {
             </div>
             {pageCount > 1 && (
               <div className="pager">
-                <button className="btn secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+                <button className="btn secondary" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
                   Previous
                 </button>
                 <span className="pager-status">
@@ -675,7 +690,7 @@ export default function Products() {
                 <button
                   className="btn secondary"
                   disabled={currentPage === pageCount}
-                  onClick={() => setPage(currentPage + 1)}
+                  onClick={() => goToPage(currentPage + 1)}
                 >
                   Next
                 </button>
