@@ -2,15 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 import PriceTrackerMark from "../components/PriceTrackerMark.jsx";
-
-// What the stored role actually means to the person reading it. "viewer" in particular
-// is worth spelling out — someone handed this account for a demo should be able to see
-// why buttons refuse, without having to press one first.
-const ROLE_LABELS = {
-  superadmin: "Super admin",
-  admin: "Admin",
-  viewer: "View only",
-};
+import { roleLabel } from "../constants/roles.js";
 
 export default function Navbar({ onToggleSidebar }) {
   const { isAuthenticated, username, role, logout } = useAuth();
@@ -60,7 +52,7 @@ export default function Navbar({ onToggleSidebar }) {
                 {isAuthenticated ? (
                   <>
                     <span className="avatar-menu-name">{username || "Logged in"}</span>
-                    {role && <span className="role-pill">{ROLE_LABELS[role] || role}</span>}
+                    {role && <span className="role-pill">{roleLabel(role)}</span>}
                   </>
                 ) : (
                   <span className="avatar-menu-name">Not logged in</span>

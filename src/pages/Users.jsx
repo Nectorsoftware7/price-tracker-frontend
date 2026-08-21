@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
 import { useAuth } from "../features/auth/AuthContext.jsx";
+import { roleLabel } from "../constants/roles.js";
 
-const ROLE_LABELS = { admin: "E-commerce Executive", superadmin: "Superadmin" };
 
 function ApproveRow({ user, onApprove }) {
   const [role, setRole] = useState("admin");
@@ -53,7 +53,7 @@ function ApprovedRow({ user, onToggleActive }) {
   return (
     <tr>
       <td>{user.username}</td>
-      <td>{ROLE_LABELS[user.role] || user.role}</td>
+      <td>{roleLabel(user.role)}</td>
       <td>{new Date(user.createdAt).toLocaleString()}</td>
       <td>
         <span className={`badge ${user.active ? "in_stock" : "out_of_stock"}`}>
