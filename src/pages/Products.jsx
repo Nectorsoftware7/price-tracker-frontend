@@ -10,7 +10,7 @@ import { useAuth } from "../features/auth/AuthContext.jsx";
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
 // the form only ever needs a name, site, and URL.
-const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "" };
+const EMPTY_FORM = { name: "", site: "shopify", url: "", flipkartSku: "", productGroup: "" };
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle", "myntra"];
 
 export default function Products() {
@@ -80,7 +80,13 @@ export default function Products() {
 
   function handleEditClick(product) {
     setEditingId(product._id);
-    setForm({ name: product.name, site: product.site, url: product.url, flipkartSku: product.flipkartSku || "" });
+    setForm({
+      name: product.name,
+      site: product.site,
+      url: product.url,
+      flipkartSku: product.flipkartSku || "",
+      productGroup: product.productGroup || "",
+    });
     // The page itself never scrolls (body { overflow: hidden }) — .main is the actual
     // scrolling container, so window.scrollTo was a no-op. scrollIntoView finds
     // whichever ancestor actually scrolls, so it works regardless of layout. Instant
@@ -286,6 +292,27 @@ export default function Products() {
               />
             </div>
           )}
+          {/* The link between the same product on two marketplaces. Nothing else in the
+              data says the Flipkart listing and the JioMart listing are the same thing,
+              and their titles are usually too different to match automatically, so the
+              dashboard's price comparison only sees listings that share a group. Any
+              label works as long as it is spelled the same on each listing. */}
+          <div className="form-row">
+            <input
+              placeholder='Product group (optional — same label on each marketplace, e.g. "multivitamin mango")'
+              style={{ flex: "1 1 320px", minWidth: 0 }}
+              value={form.productGroup}
+              onChange={(e) => setForm({ ...form, productGroup: e.target.value })}
+              list="product-groups"
+            />
+            {/* Existing groups, so a second listing is picked from the list rather than
+                retyped — a typo would silently split the pair instead of joining it. */}
+            <datalist id="product-groups">
+              {[...new Set(products.map((p) => p.productGroup).filter(Boolean))].sort().map((group) => (
+                <option key={group} value={group} />
+              ))}
+            </datalist>
+          </div>
           <div className="form-row">
             <button className="btn" type="submit" disabled={adding}>
               {adding ? (editingId ? "Saving & checking..." : "Adding & checking...") : editingId ? "Save changes" : "Add product"}

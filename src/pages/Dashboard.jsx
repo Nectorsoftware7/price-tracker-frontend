@@ -6,6 +6,9 @@ import {
   LabelList,
   LineChart,
   Line,
+  Scatter,
+  ScatterChart,
+  ZAxis,
   PieChart,
   Pie,
   Cell,
@@ -179,6 +182,29 @@ function MoverValueLabel({ x, y, width, height, value }) {
   );
 }
 
+// Each dot is one listing: x is its price, y is the product, colour is its stock status
+// and the marketplace is written beside it.
+//
+// Colour deliberately does not identify the marketplace. Seven marketplaces would need a
+// seven-hue categorical palette, and no such palette survives an all-pairs check —
+// several pairs came out below the normal-vision floor, never mind colour-blind vision.
+// Naming each dot removes the need entirely, which frees colour to carry the thing that
+// actually matters here: whether the cheapest listing is the one that is out of stock.
+function ComparisonDot({ cx, cy, payload }) {
+  if (cx == null || cy == null) return null;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={6} fill={STATUS_COLORS[payload.stock] || STATUS_COLORS.unknown} stroke="#fff" strokeWidth={2} />
+      {/* Marketplace and price on one line, not stacked: a two-line block is tall enough
+          that two dots nudged apart for a price tie still overlap each other's text. */}
+      <text x={cx + 11} y={cy} fontSize={11} fill="var(--text)" dominantBaseline="central">
+        {payload.site}
+        <tspan fill="var(--text-muted)">{` ₹${payload.price}`}</tspan>
+      </text>
+    </g>
+  );
+}
+
 function StatTile({ label, value, note }) {
   return (
     <div className="stat-tile">
@@ -254,6 +280,55 @@ export default function Dashboard() {
   );
 
   const stockByDay = dashboard?.stockByDay ?? [];
+
+  // Rows are ordered widest spread first, and y counts down so that row lands at the top
+  // of the chart rather than the bottom.
+  const comparison = dashboard?.marketplacePrices ?? [];
+  const comparisonRows = useMemo(
+    () =>
+      comparison.map((group, index) => ({
+        ...group,
+        y: comparison.length - 1 - index,
+        short: group.label.length > 30 ? `${group.label.slice(0, 29)}…` : group.label,
+      })),
+    [comparison]
+  );
+
+  // Two dots close together on the x axis collide — not just at an identical price, but
+  // any time the gap is small enough that the labels overlap, which happens at 94 vs 99
+  // as readily as at 99 vs 99. So the nudge triggers on proximity rather than on
+  // equality: walking each row in price order, a dot that lands too near the last one
+  // drops a step, and one that clears it resets to the line.
+  //
+  // The threshold is a share of the whole chart's price range, since that is what decides
+  // how many pixels apart two prices actually are.
+  //
+  // On a phone that reasoning runs out: collisions happen in pixels, and the plot there is
+  // roughly 200px wide against 1100 on a desktop, so even a wide price gap puts two ~90px
+  // labels on top of each other. Below the breakpoint every dot in a row simply stacks.
+  const comparisonPoints = useMemo(() => {
+    const prices = comparisonRows.flatMap((row) => row.offers.map((o) => o.price));
+    if (prices.length === 0) return [];
+    const span = Math.max(...prices) - Math.min(...prices);
+    const tooClose = span * 0.22;
+
+    return comparisonRows.flatMap((row) => {
+      let rank = 0;
+      let previous = null;
+      return row.offers.map((offer, index) => {
+        if (narrow) rank = index;
+        else if (previous !== null) rank = offer.price - previous <= tooClose ? rank + 1 : 0;
+        previous = offer.price;
+        return {
+          y: row.y + rank * (narrow ? 0.26 : 0.3),
+          price: offer.price,
+          site: offer.site,
+          stock: offer.stock,
+          product: row.label,
+        };
+      });
+    });
+  }, [comparisonRows, narrow]);
 
   if (loading) return <Loader />;
 
@@ -396,6 +471,99 @@ export default function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Same product, different marketplace</h3>
+        <p style={{ color: "var(--text-muted)", marginTop: -8, fontSize: 13 }}>
+          What each marketplace is currently charging for the same product. Widest gap first.
+        </p>
+        {comparisonRows.length === 0 ? (
+          <p style={{ color: "var(--text-muted)" }}>
+            No product is grouped across two marketplaces yet — set a product group on the Products page to
+            compare listings.
+          </p>
+        ) : (
+          <>
+            {/* Taller rows on a phone, where every offer in a row is stacked rather than
+                spread along the axis. */}
+            <ResponsiveContainer width="100%" height={comparisonRows.length * (narrow ? 74 : 56) + 60}>
+              <ScatterChart margin={{ top: 12, right: narrow ? 70 : 96, left: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  type="number"
+                  dataKey="price"
+                  domain={["dataMin - 20", "dataMax + 30"]}
+                  tickFormatter={(v) => `₹${v}`}
+                  tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                {/* A numeric y with formatted ticks rather than a category axis: the rows
+                    need fractional positions so tied prices can be nudged apart, and a
+                    category axis has no room between its categories. */}
+                <YAxis
+                  type="number"
+                  dataKey="y"
+                  domain={[-0.6, comparisonRows.length - 0.4]}
+                  ticks={comparisonRows.map((r) => r.y)}
+                  tickFormatter={(v) => comparisonRows.find((r) => r.y === v)?.short ?? ""}
+                  width={narrow ? 118 : 230}
+                  tick={{ fontSize: 11, fill: "var(--text)" }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <ZAxis range={[60, 60]} />
+                {/* The spread drawn as a rule behind the dots, so the gap is a length the
+                    eye can measure rather than two positions it has to compare. */}
+                {comparisonRows
+                  .filter((row) => row.high > row.low)
+                  .map((row) => (
+                    <ReferenceLine
+                      key={row.key}
+                      segment={[
+                        { x: row.low, y: row.y },
+                        { x: row.high, y: row.y },
+                      ]}
+                      stroke="var(--border)"
+                      strokeWidth={3}
+                    />
+                  ))}
+                <Tooltip
+                  cursor={{ strokeDasharray: "3 3" }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const point = payload[0].payload;
+                    return (
+                      <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 6, padding: "8px 12px", fontSize: 13 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 2 }}>{point.product}</div>
+                        <div>{`${point.site}: ₹${point.price}`}</div>
+                        <div style={{ color: "var(--text-muted)" }}>{STATUS_LABELS[point.stock] || "Unknown"}</div>
+                      </div>
+                    );
+                  }}
+                />
+                <Scatter data={comparisonPoints} shape={<ComparisonDot />} isAnimationActive={false} />
+              </ScatterChart>
+            </ResponsiveContainer>
+
+            {/* The dots' colour is stock status, so it needs naming — and recharts cannot
+                build a legend from per-point colours on a single series. */}
+            <div className="chart-legend">
+              {["in_stock", "low_stock", "out_of_stock", "unknown"].map((status) => (
+                <span key={status} className="chart-legend-item">
+                  <span className="chart-legend-dot" style={{ background: STATUS_COLORS[status] }} />
+                  {STATUS_LABELS[status]}
+                </span>
+              ))}
+            </div>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, margin: "6px 0 0" }}>
+              {dashboard?.ungrouped
+                ? `${dashboard.ungrouped} listings are not grouped yet and are left out — most marketplaces write their own titles, so the link has to be set by hand.`
+                : "Every listing is grouped."}
+            </p>
+          </>
+        )}
       </div>
 
       <div className="card">
