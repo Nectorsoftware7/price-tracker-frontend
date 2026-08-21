@@ -3,8 +3,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 import PriceTrackerMark from "../components/PriceTrackerMark.jsx";
 
+// What the stored role actually means to the person reading it. "viewer" in particular
+// is worth spelling out — someone handed this account for a demo should be able to see
+// why buttons refuse, without having to press one first.
+const ROLE_LABELS = {
+  superadmin: "Super admin",
+  admin: "Admin",
+  viewer: "View only",
+};
+
 export default function Navbar({ onToggleSidebar }) {
-  const { isAuthenticated, username, logout } = useAuth();
+  const { isAuthenticated, username, role, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -46,17 +55,17 @@ export default function Navbar({ onToggleSidebar }) {
         {menuOpen && (
           <div className="avatar-menu">
             <div className="avatar-menu-status">
-              {isAuthenticated ? (
-                <>
-                  <span className="avatar-menu-dot online" />
-                  Logged in{username ? ` as ${username}` : ""}
-                </>
-              ) : (
-                <>
-                  <span className="avatar-menu-dot" />
-                  Not logged in
-                </>
-              )}
+              <span className={`avatar-menu-dot${isAuthenticated ? " online" : ""}`} />
+              <div className="avatar-menu-identity">
+                {isAuthenticated ? (
+                  <>
+                    <span className="avatar-menu-name">{username || "Logged in"}</span>
+                    {role && <span className="role-pill">{ROLE_LABELS[role] || role}</span>}
+                  </>
+                ) : (
+                  <span className="avatar-menu-name">Not logged in</span>
+                )}
+              </div>
             </div>
             {isAuthenticated ? (
               <button className="btn danger" style={{ width: "100%" }} onClick={logout}>
