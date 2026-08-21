@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Price Tracker">
+  <!-- A favicon is read at 16px, so this is a deliberately reduced cut of the logo
+       rather than the logo shrunk. Scaling the full mark down puts the ring's stroke at
+       roughly 0.6px and the trend line not much thicker, and both simply disappear —
+       what survives at that size is solid shapes. So the ring and the trend line are
+       dropped and the two solid elements, the tag and the bars, are enlarged to fill.
+
+       The coloured tile is kept (it is how the artwork was supplied) because it also
+       solves the real problem a favicon has: browser tab strips are light in some
+       themes and dark in others, and a tile reads on both, where a bare white or bare
+       maroon mark would vanish on one of them. -->
+  <rect width="64" height="64" rx="14" fill="#c41055"/>
+
+  <!-- Tag and rupee, same construction as the full mark: the hole and the glyph are
+       punched through so the tile colour shows, which keeps the shape readable when
+       antialiasing at 16px starts merging thin white areas together. -->
+  <mask id="fav" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+    <rect width="64" height="64" fill="#000"/>
+    <g transform="translate(26 26) rotate(42)">
+      <rect x="-15" y="-15" width="30" height="30" rx="5.5" fill="#fff"/>
+      <g stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"
+         transform="rotate(-27) translate(-5.7 -9)">
+        <path d="M.8 1.1h10"/>
+        <path d="M.8 5.8h10"/>
+        <path d="M7.9 1.1c0 5.8-2.9 8.3-6.5 8.3"/>
+        <path d="M2.5 9.4 10 17.3"/>
+      </g>
+    </g>
+    <circle cx="25.8" cy="12.4" r="3.2" fill="#000"/>
+  </mask>
+  <rect width="64" height="64" mask="url(#fav)" fill="#fff"/>
+
+  <!-- The rising bars, thickened relative to the full mark so they still register as
+       three separate bars rather than one block once the icon is 16px wide. -->
+  <g fill="#fff">
+    <rect x="37" y="43" width="7" height="11" rx="2"/>
+    <rect x="46.5" y="37" width="7" height="17" rx="2"/>
+    <rect x="56" y="31" width="7" height="23" rx="2"/>
+  </g>
+</svg>

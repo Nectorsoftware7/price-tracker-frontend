@@ -397,3 +397,39 @@ input[type="date"] {
 @keyframes loader-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Two charts of equal weight, side by side. minmax(0, 1fr) rather than plain 1fr
+   because recharts' ResponsiveContainer measures its parent: a grid track defaults to
+   min-content sizing, so a plain 1fr lets the chart's own width push the column wider
+   than half and the two stop being equal. */
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* The cards carry their own bottom margin for the stacked layout; inside the grid the
+   gap does that job, so the margin would double it. */
+.chart-grid > .card { margin-bottom: 16px; }
+
+/* Same breakpoint the sidebar collapses at. Half of a phone screen is too narrow for
+   seven axis labels, so below this the two charts stack full-width again. */
+@media (max-width: 860px) {
+  .chart-grid { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* The mark is an inline SVG painted in currentColor, so it inherits the navbar's own
+   white text colour and lands at 10.89:1 against the maroon bar. That is what replaced
+   the white plate the previous logo needed: that logo was a pink wordmark (#F07090) on
+   transparency, which measured only 3.85:1 here — same hue family as the bar, so it
+   sank into it. A shape that takes the foreground colour cannot have that problem.
+
+   Square, because the viewBox is cropped to the ring. 36px leaves 10px of navbar above
+   and below it. */
+.navbar-logo {
+  width: 36px;
+  height: 36px;
+  display: block;
+  flex: none;
+}

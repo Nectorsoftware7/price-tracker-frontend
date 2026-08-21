@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 372" role="img" aria-label="Price Tracker">
+  <!-- Everything paints in currentColor, so one CSS `color` sets the whole mark: white
+       on the maroon navbar, maroon on a light surface. That is also why there is no
+       background here at all — the artwork is the shape, not a coloured tile. -->
+  <g fill="currentColor">
+    <!-- Ring, left open between roughly 35 and 80 degrees so the tag's string passes
+         through the break rather than colliding with the stroke. -->
+    <path d="M245.2 72.3A104 104 0 1 1 178.1 29.6" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+
+    <!-- The lace: a straight run out of the tag hole, then a loop that sits inside the
+         ring's break. The loop is drawn as a not-quite-closed arc so the two ends read
+         as a piece of string threaded through, not as a second solid circle. -->
+    <path d="M131 63Q168 40 201 53" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+    <path d="M201.9 54.2A16 16 0 1 1 209.5 60" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+
+    <!-- The tag is drawn through a mask so the lace hole and the rupee mark are real
+         holes punched out of it. Filling them with the background colour would only
+         work on one background, and this mark has to sit on several.
+
+         The tag turns 42 degrees so it reads as a tag hanging from its corner. The rupee
+         only turns 15 of that (42 then -27): tilted enough to belong to the card, but
+         not so far that the glyph stops being legible at navbar size. -->
+    <mask id="tag" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="372">
+      <rect width="320" height="372" fill="#000"/>
+      <g transform="translate(124 110) rotate(42)">
+        <rect x="-42" y="-42" width="84" height="84" rx="14" fill="#fff"/>
+        <g stroke="#000" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"
+           transform="rotate(-27) translate(-16 -25)">
+          <path d="M2 3h28"/>
+          <path d="M2 16h28"/>
+          <path d="M22 3c0 16-8 23-18 23"/>
+          <path d="M7 26 28 48"/>
+        </g>
+      </g>
+      <circle cx="124.4" cy="70" r="9" fill="#000"/>
+    </mask>
+    <rect width="320" height="372" mask="url(#tag)"/>
+
+    <!-- Three rising bars, sized to stay inside the ring and clear of the tag corner. -->
+    <rect x="140" y="178" width="22" height="32" rx="5"/>
+    <rect x="168" y="164" width="22" height="46" rx="5"/>
+    <rect x="196" y="150" width="22" height="60" rx="5"/>
+
+    <!-- The trend line climbing across the bars. The head is the plain two-stroke
+         corner, which reads as an arrowhead because the line arrives at 45 degrees. -->
+    <g fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M112 192 214 128"/>
+      <path d="M206 118h20v20"/>
+    </g>
+  </g>
+
+  <!-- The wordmark. A generic sans is the closest an SVG can get without embedding the
+       brand face — see the note in index.css about swapping in the real artwork if the
+       exact type matters. -->
+  <g fill="currentColor" text-anchor="middle"
+     font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+    <text x="160" y="303" font-size="54" font-weight="700" letter-spacing="4">PRICE</text>
+    <text x="160" y="345" font-size="25" font-weight="600" letter-spacing="7">TRACKER</text>
+    <g stroke="currentColor" stroke-width="4" stroke-linecap="round">
+      <path d="M46 337h26"/>
+      <path d="M248 337h26"/>
+    </g>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext.jsx";
+import PriceTrackerMark from "../components/PriceTrackerMark.jsx";
 
 export default function Navbar({ onToggleSidebar }) {
   const { isAuthenticated, username, logout } = useAuth();
@@ -34,7 +35,7 @@ export default function Navbar({ onToggleSidebar }) {
       </button>
 
       <Link to="/" className="navbar-brand" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <img src="/purna-logo.png" alt="" style={{ height: 28, width: "auto" }} />
+        <PriceTrackerMark className="navbar-logo" />
         Price Tracker
       </Link>
 
