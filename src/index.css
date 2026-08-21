@@ -383,6 +383,14 @@ input[type="date"] {
   .main { padding: 14px; }
   .navbar-brand { font-size: 15px; }
   .form-row { flex-direction: column; align-items: stretch; }
+
+  /* flex-basis is measured along the main axis, and this rule has just turned the main
+     axis vertical. The inputs carry an inline "1 1 240px" sized for the row layout, so
+     that basis became a 240px *height* — the URL field rendered 240px tall and the
+     product-group field 320px, while every field without an inline flex stayed at 33px.
+     Stretch already gives them full width here, so the basis has nothing left to do.
+     !important because an inline style outranks a stylesheet. */
+  .form-row > * { flex: 0 0 auto !important; }
   .stat-row { gap: 10px; }
   .btn { width: 100%; }
   .form-row .btn { width: auto; }
