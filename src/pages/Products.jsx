@@ -10,6 +10,46 @@ import { useAuth } from "../features/auth/AuthContext.jsx";
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
 // the form only ever needs a name, site, and URL.
+// The floor, editable where it is read. Setting one is a per-listing judgement made
+// while looking at that listing's price, so making it a row-level control saves opening
+// the edit form for a single number.
+//
+// The draft is held separately from the saved value so the field does not snap back
+// mid-typing when the table refetches, and is dropped once saved so the row goes back to
+// showing what the server holds. Clearing the box and saving removes the floor — that is
+// the only way to take one off, so the button stays live for an empty box that used to
+// have a value.
+function TargetPriceCell({ product, draft, onDraft, onSave, saving, guard }) {
+  const stored = product.targetPrice ?? "";
+  const value = draft ?? String(stored);
+  const dirty = value.trim() !== String(stored);
+  const breached =
+    product.targetPrice != null && product.lastPrice != null && product.lastPrice < product.targetPrice;
+
+  return (
+    <div className="target-cell">
+      <input
+        type="number"
+        min="0"
+        step="1"
+        className={breached && !dirty ? "below-target" : undefined}
+        title={breached ? `₹${Math.round((product.targetPrice - product.lastPrice) * 100) / 100} below target` : "No target set"}
+        placeholder="—"
+        value={value}
+        onChange={(e) => onDraft(product._id, e.target.value)}
+        disabled={saving}
+      />
+      <button
+        className="btn secondary"
+        disabled={!dirty || saving}
+        onClick={guard(() => onSave(product._id, value))}
+      >
+        {saving ? "…" : product.targetPrice == null ? "Save" : "Update"}
+      </button>
+    </div>
+  );
+}
+
 // A header that sorts. The arrow only appears on the column actually in use — showing a
 // neutral marker on every column makes the active one harder to spot, not easier.
 // aria-sort is what tells a screen reader the same thing the arrow tells everyone else.
@@ -56,6 +96,8 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState({ key: "name", dir: "asc" });
   const [page, setPage] = useState(1);
+  const [targetDrafts, setTargetDrafts] = useState({});
+  const [savingTarget, setSavingTarget] = useState(null);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
@@ -126,6 +168,26 @@ export default function Products() {
     if (!confirm("Remove this product from tracking?")) return;
     await api.deleteProduct(id);
     invalidate();
+  }
+
+  async function handleSaveTarget(id, value) {
+    setSavingTarget(id);
+    setError(null);
+    try {
+      await api.updateProduct(id, { targetPrice: value.trim() });
+      // Drop the draft so the row reads the saved value again — including the case where
+      // the server stored null for an emptied box.
+      setTargetDrafts((drafts) => {
+        const next = { ...drafts };
+        delete next[id];
+        return next;
+      });
+      await invalidate();
+    } catch (err) {
+      setError(err.message || "Could not save the target price");
+    } finally {
+      setSavingTarget(null);
+    }
   }
 
   async function handleCheckNow(id) {
@@ -539,7 +601,7 @@ export default function Products() {
               <col style={{ width: 220 }} />
               <col style={{ width: 80 }} />
               <col style={{ width: 90 }} />
-              <col style={{ width: 90 }} />
+              <col style={{ width: 170 }} />
               <col style={{ width: 100 }} />
               <col style={{ width: 150 }} />
               <col style={{ width: 280 }} />
@@ -579,15 +641,14 @@ export default function Products() {
                   {/* A breach is a state, not an event: the Telegram alert fires once on
                       the crossing, so this is what shows it is still under. */}
                   <td>
-                    {p.targetPrice == null ? (
-                      "—"
-                    ) : p.lastPrice != null && p.lastPrice < p.targetPrice ? (
-                      <span className="below-target" title={`₹${Math.round((p.targetPrice - p.lastPrice) * 100) / 100} below target`}>
-                        ₹{p.targetPrice}
-                      </span>
-                    ) : (
-                      `₹${p.targetPrice}`
-                    )}
+                    <TargetPriceCell
+                      product={p}
+                      draft={targetDrafts[p._id]}
+                      onDraft={(id, v) => setTargetDrafts((d) => ({ ...d, [id]: v }))}
+                      onSave={handleSaveTarget}
+                      saving={savingTarget === p._id}
+                      guard={guardAction}
+                    />
                   </td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>

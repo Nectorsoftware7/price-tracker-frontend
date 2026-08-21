@@ -584,3 +584,13 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   margin-top: 12px;
 }
 .pager-status { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* The inline target-price editor. The input is sized to the digits it holds rather than
+   filling the cell, so the button sits next to it instead of below. */
+.target-cell { display: flex; align-items: center; gap: 6px; }
+.target-cell input { width: 68px; padding: 5px 7px; font-size: 12px; }
+.target-cell .btn { padding: 5px 9px; font-size: 12px; white-space: nowrap; }
+/* The number-spinner arrows would eat most of a 68px field. */
+.target-cell input::-webkit-outer-spin-button,
+.target-cell input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.target-cell input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
