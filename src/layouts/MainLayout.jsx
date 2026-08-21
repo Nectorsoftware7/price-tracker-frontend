@@ -25,11 +25,9 @@ export default function MainLayout() {
               Dashboard
             </NavLink>
           )}
-          {role !== "superadmin" && (
-            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
-              Products
-            </NavLink>
-          )}
+          <NavLink to="/products" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
+            Products
+          </NavLink>
           <NavLink to="/price-stock" className={({ isActive }) => (isActive ? "active" : "")} onClick={closeSidebar}>
             Stock status
           </NavLink>

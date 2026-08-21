@@ -65,7 +65,7 @@ export default function BottomNav() {
 
   const items = [
     (role === "superadmin" || role === "viewer") && { to: "/dashboard", label: "Dashboard", Icon: DashboardIcon },
-    role !== "superadmin" && { to: "/", end: true, label: "Products", Icon: ProductsIcon },
+    { to: "/products", label: "Products", Icon: ProductsIcon },
     { to: "/price-stock", label: "Stock status", Icon: PriceStockIcon },
     { to: "/price-analytics", label: "Analytics", Icon: AnalyticsIcon },
     { to: "/reviews", label: "Contact", Icon: ContactIcon },
