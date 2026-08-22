@@ -2,12 +2,43 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
+import { Pager, usePagination } from "../components/Pager.jsx";
 import { useAuth } from "../features/auth/AuthContext.jsx";
 
 const TABS = [
   { key: "shopify", label: "Shopify" },
   { key: "woocommerce", label: "WooCommerce" },
 ];
+
+function initials(name, email) {
+  const source = (name || email || "?").trim();
+  const parts = source.split(/[\s.@_-]+/).filter(Boolean);
+  return ((parts[0]?.[0] || "?") + (parts[1]?.[0] || "")).toUpperCase();
+}
+
+// Just the clock time, the way a messaging app stamps a bubble — the full date already
+// sits in the conversation header, so repeating it on every message is noise.
+function bubbleTime(value) {
+  if (!value) return "";
+  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// One message. Which side it sits on is the whole encoding: the customer on the left,
+// anything we sent on the right.
+function Bubble({ side, label, time, children, footer }) {
+  return (
+    <div className={`bubble-row ${side}`}>
+      <div className="bubble">
+        {label && <div className="bubble-label">{label}</div>}
+        <div className="bubble-text">{children}</div>
+        <div className="bubble-meta">
+          {footer}
+          {time && <span className="bubble-time">{time}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ConversationCard({ submission, onReplySent, guardAction }) {
   const [draft, setDraft] = useState("");
@@ -29,75 +60,74 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
     }
   }
 
+  const canReply = Boolean(submission.email);
+
   return (
-    <div className="card">
-      <div className="form-row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
-        <div>
+    <div className="card chat-card">
+      <header className="chat-head">
+        <span className="chat-avatar">{initials(submission.name, submission.email)}</span>
+        <div className="chat-who">
           <strong>{submission.name || "Unknown"}</strong>
-          {submission.email && <span style={{ color: "#487474" }}> — {submission.email}</span>}
-          {submission.phone && <span style={{ color: "#487474" }}> — {submission.phone}</span>}
+          <span className="chat-contact">
+            {[submission.email, submission.phone].filter(Boolean).join(" · ") || "No contact details"}
+          </span>
         </div>
-        <span style={{ color: "#487474", fontSize: 12 }}>{new Date(submission.createdAt).toLocaleString()}</span>
+        <span className="chat-date">{new Date(submission.createdAt).toLocaleDateString()}</span>
+      </header>
+
+      <div className="chat-thread">
+        <Bubble side="in" time={bubbleTime(submission.createdAt)}>
+          {submission.message || <em className="muted">No message text found</em>}
+        </Bubble>
+
+        {submission.aiReply && (
+          <Bubble
+            side="out"
+            label="AI reply"
+            time={bubbleTime(submission.createdAt)}
+            footer={
+              submission.emailSent ? (
+                <span className="delivery sent">Emailed</span>
+              ) : (
+                // The raw provider error used to be printed in full inside the bubble,
+                // which buried the reply itself under a paragraph of API guidance. The
+                // state belongs in a chip; the detail belongs on hover, where someone
+                // debugging can still reach it.
+                <span className="delivery failed" title={submission.emailError || "Not sent"}>
+                  Not delivered
+                </span>
+              )
+            }
+          >
+            {submission.aiReply}
+          </Bubble>
+        )}
+
+        {submission.manualReply && (
+          <Bubble side="out" label="Your reply" time={bubbleTime(submission.manualReplySentAt)}>
+            {submission.manualReply}
+          </Bubble>
+        )}
       </div>
 
-      {/* Customer message bubble */}
-      <div style={{ background: "#e4f2f1", borderRadius: 8, padding: "10px 14px", marginBottom: 10, maxWidth: "80%" }}>
-        {submission.message || <em style={{ color: "#487474" }}>No message text found</em>}
-      </div>
-
-      {/* AI reply bubble */}
-      {submission.aiReply && (
-        <div
-          style={{
-            background: "#dcf5e3",
-            borderRadius: 8,
-            padding: "10px 14px",
-            marginBottom: 10,
-            maxWidth: "80%",
-            marginLeft: "auto",
-          }}
-        >
-          <div style={{ fontSize: 11, color: "#1c7a3c", marginBottom: 4 }}>
-            🤖 AI reply {submission.emailSent ? "(emailed)" : submission.emailError ? `(email failed: ${submission.emailError})` : ""}
-          </div>
-          {submission.aiReply}
-        </div>
-      )}
-
-      {/* Manual reply bubble, if one was sent */}
-      {submission.manualReply && (
-        <div
-          style={{
-            background: "#dbeeee",
-            borderRadius: 8,
-            padding: "10px 14px",
-            marginBottom: 10,
-            maxWidth: "80%",
-            marginLeft: "auto",
-          }}
-        >
-          <div style={{ fontSize: 11, color: "#006969", marginBottom: 4 }}>
-            ✍️ Manual reply — {new Date(submission.manualReplySentAt).toLocaleString()}
-          </div>
-          {submission.manualReply}
-        </div>
-      )}
-
-      {/* Reply-from-here box */}
-      <div className="form-row" style={{ marginTop: 8 }}>
+      <div className="chat-composer">
         <input
-          placeholder={submission.email ? "Type a reply and send..." : "No email on this submission — can't reply"}
-          style={{ flex: 1 }}
+          placeholder={canReply ? "Type a reply…" : "No email on this submission — can't reply"}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          disabled={!submission.email}
+          disabled={!canReply}
           onKeyDown={(e) => e.key === "Enter" && guardAction(handleSend)()}
         />
-        <button className="btn" onClick={guardAction(handleSend)} disabled={!submission.email || sending || !draft.trim()}>
-          {sending ? "Sending..." : "Send"}
+        <button
+          className="chat-send"
+          aria-label="Send reply"
+          onClick={guardAction(handleSend)}
+          disabled={!canReply || sending || !draft.trim()}
+        >
+          {sending ? "…" : "➤"}
         </button>
       </div>
-      {error && <p style={{ color: "#a71d1d", fontSize: 13, marginTop: 6 }}>{error}</p>}
+      {error && <p className="chat-error">{error}</p>}
     </div>
   );
 }
@@ -118,15 +148,21 @@ export default function Reviews() {
   }
 
   const filtered = submissions.filter((s) => s.platform === tab);
+  // Ten conversations to a page: each one is a whole thread rather than a table row, so
+  // the same 25 that suits a list would be a very long scroll here.
+  const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(filtered, {
+    pageSize: 10,
+    resetKey: tab,
+  });
 
   return (
     <div>
       <h2>Contact form conversations</h2>
-      <p style={{ color: "#487474", marginTop: -8 }}>
+      <p style={{ color: "var(--text-muted)", marginTop: -8 }}>
         Every customer question submitted through the website contact forms, the AI's auto-reply, and a place to send your own reply.
       </p>
 
-      <div className="form-row" style={{ marginBottom: 16 }}>
+      <div className="form-row" ref={topRef} style={{ marginBottom: 8 }}>
         {TABS.map((t) => (
           <button key={t.key} className={`btn ${tab === t.key ? "" : "secondary"}`} onClick={() => setTab(t.key)}>
             {t.label}
@@ -140,10 +176,21 @@ export default function Reviews() {
         <Loader />
       ) : filtered.length === 0 ? (
         <div className="card">
-          <p style={{ color: "#487474", margin: 0 }}>No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.</p>
+          <p style={{ color: "var(--text-muted)", margin: 0 }}>
+            No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.
+          </p>
         </div>
       ) : (
-        filtered.map((s) => <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} guardAction={guardAction} />)
+        <>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 12px" }}>
+            {total} conversation{total === 1 ? "" : "s"}
+            {pageCount > 1 ? ` — showing ${from}–${to}` : ""}
+          </p>
+          {visible.map((s) => (
+            <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} guardAction={guardAction} />
+          ))}
+          <Pager page={page} pageCount={pageCount} onChange={goToPage} />
+        </>
       )}
     </div>
   );

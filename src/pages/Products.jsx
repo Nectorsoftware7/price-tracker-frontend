@@ -6,6 +6,7 @@ import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
 import { useAuth } from "../features/auth/AuthContext.jsx";
+import { Pager, usePagination } from "../components/Pager.jsx";
 
 // Every supported site resolves price/stock automatically (structured data, or a
 // built-in fallback selector on the server for sites like JioMart that need one) —
@@ -95,10 +96,8 @@ export default function Products() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState({ key: "name", dir: "asc" });
-  const [page, setPage] = useState(1);
   const [targetDrafts, setTargetDrafts] = useState({});
   const [savingTarget, setSavingTarget] = useState(null);
-  const tableTopRef = useRef(null);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
@@ -354,29 +353,13 @@ export default function Products() {
     return (x - y) * dir;
   });
 
-  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  // Narrowing the search can leave the current page past the end of the results, which
-  // would show an empty table rather than the matches.
-  const currentPage = Math.min(page, pageCount);
-  const visible = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  // Paging swaps 25 rows out from under the reader while the viewport stays where it
-  // was, which on page two lands them in the middle of a fresh list with the top of it
-  // scrolled off. Moving back to the head of the table is what makes the new page
-  // readable from its first row.
-  function goToPage(next) {
-    setPage(next);
-    tableTopRef.current?.scrollIntoView({
-      // Someone who has asked the system to reduce motion should not be flung up the
-      // page; they still get taken there, just without the travel.
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "start",
-    });
-  }
+  const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(sorted, {
+    pageSize: PAGE_SIZE,
+    resetKey: `${stockFilter}|${siteFilter}|${search}`,
+  });
 
   function toggleSort(key) {
     setSort((prev) => ({ key, dir: prev.key === key && prev.dir === "asc" ? "desc" : "asc" }));
-    setPage(1);
   }
 
   // Exports everything the current filters and search match, not just the page on screen
@@ -562,15 +545,15 @@ export default function Products() {
                 wrap into two lines well before it ran out of width. The search is the
                 only thing that grows, since it is the only one whose useful size varies
                 with the space available. */}
-            <div className="form-row" ref={tableTopRef}>
-              <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value); setPage(1); }}>
+            <div className="form-row" ref={topRef}>
+              <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
                 <option value="all">All stock statuses</option>
                 <option value="in_stock">In stock</option>
                 <option value="low_stock">Low stock</option>
                 <option value="out_of_stock">Out of stock</option>
                 <option value="unknown">Unknown</option>
               </select>
-              <select value={siteFilter} onChange={(e) => { setSiteFilter(e.target.value); setPage(1); }}>
+              <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)}>
                 <option value="all">All sites</option>
                 {SITE_OPTIONS.map((s) => (
                   <option key={s} value={s}>
@@ -583,10 +566,7 @@ export default function Products() {
                 placeholder="Search name, platform or group"
                 style={{ flex: "1 1 200px", minWidth: 0 }}
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
               />
               <button className="btn secondary" onClick={handleExport} disabled={sorted.length === 0}>
                 Export to Excel
@@ -596,12 +576,8 @@ export default function Products() {
               </button>
             </div>
             <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "2px 0 8px" }}>
-              {sorted.length === products.length
-                ? `${products.length} products`
-                : `${sorted.length} of ${products.length} products match`}
-              {sorted.length > PAGE_SIZE
-                ? ` — showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, sorted.length)}. Export takes all ${sorted.length}.`
-                : ""}
+              {total === products.length ? `${products.length} products` : `${total} of ${products.length} products match`}
+              {pageCount > 1 ? ` — showing ${from}–${to}. Export takes all ${total}.` : ""}
             </p>
             <div className="table-scroll">
             <table className="table-products">
@@ -679,23 +655,7 @@ export default function Products() {
             </tbody>
             </table>
             </div>
-            {pageCount > 1 && (
-              <div className="pager">
-                <button className="btn secondary" disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>
-                  Previous
-                </button>
-                <span className="pager-status">
-                  Page {currentPage} of {pageCount}
-                </span>
-                <button
-                  className="btn secondary"
-                  disabled={currentPage === pageCount}
-                  onClick={() => goToPage(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            <Pager page={page} pageCount={pageCount} onChange={goToPage} />
             {sorted.length === 0 && (
               <p style={{ color: "var(--text-muted)" }}>
                 Nothing matches those filters{search ? ` and “${search}”` : ""}.

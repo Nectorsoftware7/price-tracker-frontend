@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
+import { Pager, usePagination } from "../components/Pager.jsx";
 
 const FLAGGED_STATUSES = ["out_of_stock", "low_stock"];
 const NAME_MAX_LENGTH = 42;
@@ -59,9 +60,13 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
     [events, siteFilter, statusFilter, activityCutoff]
   );
 
+  const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(filtered, {
+    resetKey: statusFilter,
+  });
+
   return (
     <div className="card">
-      <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+      <div className="form-row" ref={topRef} style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>🕐 Recent stock changes</h3>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="all">All stock statuses</option>
@@ -95,7 +100,7 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e) => (
+              {visible.map((e) => (
                 <tr key={e._id}>
                   <td>{new Date(e.checkedAt).toLocaleString()}</td>
                   <td>
@@ -111,6 +116,12 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
           </table>
         </div>
       )}
+      {pageCount > 1 && (
+        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "8px 0 0" }}>
+          Showing {from}–{to} of {total}
+        </p>
+      )}
+      <Pager page={page} pageCount={pageCount} onChange={goToPage} />
     </div>
   );
 }
@@ -176,6 +187,8 @@ export default function PriceStockVariation() {
   // "Flagged" mixes out-of-stock with low-stock, but the usual question is just "how
   // many are actually out of stock right now" — so that count is stated above the table.
   const outOfStock = useMemo(() => flagged.filter((p) => p.lastStock === "out_of_stock"), [flagged]);
+  const flaggedPage = usePagination(flagged, { resetKey: `${siteFilter}|${activityRange}` });
+  const flaggedTopRef = flaggedPage.topRef;
 
   // Only products with an actual price swing in the window (min != max) — a flat price isn't a "variation".
   const varied = useMemo(() => {
@@ -220,7 +233,7 @@ export default function PriceStockVariation() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
+        <h3 ref={flaggedTopRef} style={{ marginTop: 0 }}>⚠️ Flagged (out of stock / low stock)</h3>
 
         <p style={{ color: "#487474", marginTop: 8 }}>
           <b style={{ color: "var(--text)" }}>{outOfStock.length}</b> out of stock
@@ -253,7 +266,7 @@ export default function PriceStockVariation() {
               </tr>
             </thead>
             <tbody>
-              {flagged.map((p) => (
+              {flaggedPage.visible.map((p) => (
                 <tr key={p._id}>
                   <td><ProductLink product={p} /></td>
                   <td>{p.site}</td>
@@ -265,6 +278,12 @@ export default function PriceStockVariation() {
           </table>
           </div>
         )}
+        {flaggedPage.pageCount > 1 && (
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "8px 0 0" }}>
+            Showing {flaggedPage.from}–{flaggedPage.to} of {flaggedPage.total}
+          </p>
+        )}
+        <Pager page={flaggedPage.page} pageCount={flaggedPage.pageCount} onChange={flaggedPage.goToPage} />
       </div>
 
       <RecentStockChanges siteFilter={siteFilter} activityCutoff={activityCutoff} hours={ACTIVITY_RANGES.find((r) => r.key === activityRange).hours} />
