@@ -98,6 +98,10 @@ export default function Products() {
   const [sort, setSort] = useState({ key: "name", dir: "asc" });
   const [targetDrafts, setTargetDrafts] = useState({});
   const [savingTarget, setSavingTarget] = useState(null);
+  // Held as ids rather than rows, so a selection survives sorting, filtering and paging —
+  // the count beside the buttons is what says how many are really in hand.
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(null);
   const [stockFilter, setStockFilter] = useState("all");
   const [siteFilter, setSiteFilter] = useState("all");
   const formCardRef = useRef(null);
@@ -168,6 +172,62 @@ export default function Products() {
     if (!confirm("Remove this product from tracking?")) return;
     await api.deleteProduct(id);
     invalidate();
+  }
+
+  function toggleSelected(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // The header box acts on the page in view, not on the whole filtered set: ticking one
+  // box should never quietly pick up rows the reader cannot see.
+  function togglePageSelection(rows) {
+    const allOnPage = rows.length > 0 && rows.every((p) => selected.has(p._id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      rows.forEach((p) => (allOnPage ? next.delete(p._id) : next.add(p._id)));
+      return next;
+    });
+  }
+
+  async function handleBulkCheck() {
+    const ids = [...selected];
+    setError(null);
+    setBulkBusy({ done: 0, total: ids.length, verb: "Checking" });
+    // One at a time: each check drives a scraper, and firing twenty at once would
+    // hammer the marketplaces and the API together.
+    for (const [index, id] of ids.entries()) {
+      try {
+        await api.checkNow(id);
+      } catch {
+        // A single unreachable listing should not abandon the rest of the selection.
+      }
+      setBulkBusy({ done: index + 1, total: ids.length, verb: "Checking" });
+    }
+    setBulkBusy(null);
+    await invalidate();
+  }
+
+  async function handleBulkDelete() {
+    const ids = [...selected];
+    if (!confirm(`Remove ${ids.length} product${ids.length === 1 ? "" : "s"} from tracking? This also deletes their price and stock history.`)) return;
+    setError(null);
+    setBulkBusy({ done: 0, total: ids.length, verb: "Removing" });
+    for (const [index, id] of ids.entries()) {
+      try {
+        await api.deleteProduct(id);
+      } catch (err) {
+        setError(err.message || "Some products could not be removed");
+      }
+      setBulkBusy({ done: index + 1, total: ids.length, verb: "Removing" });
+    }
+    setSelected(new Set());
+    setBulkBusy(null);
+    await invalidate();
   }
 
   async function handleSaveTarget(id, value) {
@@ -575,6 +635,27 @@ export default function Products() {
                 {checkingAll ? "Checking all products..." : "Check all products"}
               </button>
             </div>
+            {/* Only present when something is selected — an always-visible bar of disabled
+                buttons is chrome the reader has to learn to ignore. */}
+            {selected.size > 0 && (
+              <div className="bulk-bar">
+                <span className="bulk-count">{selected.size} selected</span>
+                <button className="btn secondary" disabled={Boolean(bulkBusy)} onClick={guardAction(handleBulkCheck)}>
+                  Check selected
+                </button>
+                <button className="btn danger" disabled={Boolean(bulkBusy)} onClick={guardAction(handleBulkDelete)}>
+                  Delete selected
+                </button>
+                <button className="btn secondary" disabled={Boolean(bulkBusy)} onClick={() => setSelected(new Set())}>
+                  Clear
+                </button>
+                {bulkBusy && (
+                  <span className="bulk-progress">
+                    {bulkBusy.verb} {bulkBusy.done}/{bulkBusy.total}…
+                  </span>
+                )}
+              </div>
+            )}
             <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "2px 0 8px" }}>
               {total === products.length ? `${products.length} products` : `${total} of ${products.length} products match`}
               {pageCount > 1 ? ` — showing ${from}–${to}. Export takes all ${total}.` : ""}
@@ -589,6 +670,7 @@ export default function Products() {
                 side without their text clipping, which % widths weren't guaranteeing
                 on narrow/mobile viewports even inside the horizontal-scroll wrapper. */}
             <colgroup>
+              <col style={{ width: 34 }} />
               <col style={{ width: 220 }} />
               <col style={{ width: 80 }} />
               <col style={{ width: 90 }} />
@@ -599,6 +681,14 @@ export default function Products() {
             </colgroup>
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    aria-label="Select every row on this page"
+                    checked={visible.length > 0 && visible.every((p) => selected.has(p._id))}
+                    onChange={() => togglePageSelection(visible)}
+                  />
+                </th>
                 <SortableTh label="Name" sortKey="name" sort={sort} onSort={toggleSort} />
                 <SortableTh label="Site" sortKey="site" sort={sort} onSort={toggleSort} />
                 <SortableTh label="Last price" sortKey="price" sort={sort} onSort={toggleSort} />
@@ -610,12 +700,20 @@ export default function Products() {
             </thead>
             <tbody>
               {visible.map((p) => (
-                <tr key={p._id}>
+                <tr key={p._id} className={selected.has(p._id) ? "row-selected" : undefined}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${p.name}`}
+                      checked={selected.has(p._id)}
+                      onChange={() => toggleSelected(p._id)}
+                    />
+                  </td>
                   {/* The name opens the actual listing on the marketplace — that's what
                       you want when checking "is this really out of stock?". The tracker's
                       own price/stock history moves to a separate small link, since the
                       name was previously the only route to it. */}
-                  <td>
+                  <td className="product-name">
                     <a href={p.url} target="_blank" rel="noopener noreferrer" title={p.name}>
                       {p.name}
                     </a>
