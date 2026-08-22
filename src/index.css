@@ -1010,3 +1010,21 @@ tr.row-selected td { background: var(--blue-50); }
    The width here is two classes deep so it beats the mobile ".btn { width: 100% }". */
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-group .btn { width: auto; }
+
+/* Cards sit the same distance apart as they do from the edges of the screen.
+   The page pads itself by 16px, dropping to 14 on a small phone, while every card carried
+   a fixed 16px below it — so on a phone the space between two cards was wider than the
+   space beside them, and the stack read as looser vertically than horizontally.
+   One number per breakpoint now drives both. */
+@media (max-width: 860px) {
+  .card,
+  .chart-grid > .card,
+  .stat-row { margin-bottom: 16px; }
+  .chart-grid { gap: 0; }
+}
+
+@media (max-width: 480px) {
+  .card,
+  .chart-grid > .card,
+  .stat-row { margin-bottom: 14px; }
+}
