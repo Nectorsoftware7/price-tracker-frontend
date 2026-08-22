@@ -662,7 +662,10 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  /* The pane itself does not scroll — only the list of threads inside it does, so the
+     tabs stay at the top and the pager stays at the bottom instead of both drifting off
+     with the conversations. */
+  overflow: hidden;
   padding: 10px;
   gap: 8px;
 }
@@ -670,7 +673,17 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 .chat-list-head .btn { flex: 1; padding: 6px 8px; font-size: 12px; }
 .chat-list-count { font-size: 11.5px; color: var(--text-muted); margin: 0; }
 .chat-list-empty { font-size: 13px; color: var(--text-muted); margin: 8px 2px; }
-.chat-list-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.chat-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .chat-list-item {
   width: 100%;
@@ -939,3 +952,38 @@ tr.row-selected td { background: var(--blue-50); }
 /* Search box in the stock-change log header. Grows into whatever the heading and the date
    range leave, so it is usable on a wide card without crowding them on a narrow one. */
 .log-search { flex: 1 1 180px; min-width: 140px; font-size: 12px; padding: 5px 9px; }
+
+/* Desktop conversation view, edge to edge.
+   .main pads its pages by 36/28 and caps them at a 1100px reading width, which is right
+   for a document and wrong for a chat — it left the two panes floating in the middle of
+   the window with a strip of page around them. Here the cap is lifted and the padding is
+   pulled back out, so the panes meet the window the way a desktop messaging app does.
+   Scoped above the breakpoint: below it the open thread is already pinned full-screen. */
+@media (min-width: 861px) {
+  .main > .chat-page { max-width: none; }
+
+  .chat-layout {
+    gap: 0;
+    margin: 0 -36px -28px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* One border between the panes rather than two card edges and a gap. */
+  .chat-list,
+  .chat-pane {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .chat-list { border-right: 1px solid var(--border); }
+
+  /* Nothing sits under a chat window. */
+  .chat-page + .app-footer { display: none; }
+}
+
+/* Thin scrollbars inside the panes, so they read as part of the surface rather than as
+   two more borders. WebKit ignores the standard properties, hence both. */
+.chat-list-items, .chat-thread { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.chat-list-items::-webkit-scrollbar, .chat-thread::-webkit-scrollbar { width: 8px; }
+.chat-list-items::-webkit-scrollbar-track, .chat-thread::-webkit-scrollbar-track { background: transparent; }
+.chat-list-items::-webkit-scrollbar-thumb, .chat-thread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
