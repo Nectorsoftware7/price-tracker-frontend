@@ -987,3 +987,19 @@ tr.row-selected td { background: var(--blue-50); }
 .chat-list-items::-webkit-scrollbar, .chat-thread::-webkit-scrollbar { width: 8px; }
 .chat-list-items::-webkit-scrollbar-track, .chat-thread::-webkit-scrollbar-track { background: transparent; }
 .chat-list-items::-webkit-scrollbar-thumb, .chat-thread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* On a phone the brand sits in the left corner rather than centred.
+   It is absolutely centred on desktop so that the hamburger and the avatar, which differ
+   in width, cannot pull it off the navbar's true midpoint. Below the breakpoint the
+   hamburger is gone entirely, so that reasoning goes with it — and a mark in the corner
+   is what a phone app puts there.
+
+   Appended after .navbar-brand's own rule: both are single-class selectors, so this only
+   wins on source order. */
+@media (max-width: 860px) {
+  .navbar-brand {
+    position: static;
+    transform: none;
+    margin-right: auto;
+  }
+}
