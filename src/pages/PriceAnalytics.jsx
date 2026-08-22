@@ -221,7 +221,7 @@ export default function PriceAnalytics() {
               <tbody>
                 {variationPage.visible.map(({ product: p, stats }) => (
                   <tr key={p._id}>
-                    <td>
+                    <td className="product-name">
                       <a href={p.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer" title={p.name}>
                         {p.name}
                       </a>

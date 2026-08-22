@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import Loader from "../components/Loader.jsx";
@@ -23,6 +23,24 @@ function bubbleTime(value) {
   return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+// Today gets a time, anything older gets a date — the same rule a messaging app uses on
+// its conversation list, because "14:32" on a three-week-old thread tells you nothing.
+function listStamp(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  const sameDay = new Date().toDateString() === date.toDateString();
+  return sameDay
+    ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : date.toLocaleDateString([], { day: "2-digit", month: "short" });
+}
+
+// The last thing said, whoever said it — which is what the list preview should show.
+function lastMessage(submission) {
+  if (submission.manualReply) return { text: submission.manualReply, mine: true, at: submission.manualReplySentAt };
+  if (submission.aiReply) return { text: submission.aiReply, mine: true, at: submission.createdAt };
+  return { text: submission.message || "No message text", mine: false, at: submission.createdAt };
+}
+
 // One message. Which side it sits on is the whole encoding: the customer on the left,
 // anything we sent on the right.
 function Bubble({ side, label, time, children, footer }) {
@@ -40,10 +58,17 @@ function Bubble({ side, label, time, children, footer }) {
   );
 }
 
-function ConversationCard({ submission, onReplySent, guardAction }) {
+function ConversationView({ submission, onReplySent, guardAction, onBack }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+
+  // A draft belongs to the thread it was typed in, not to the pane — switching
+  // conversations must not carry half a sentence across to someone else.
+  useEffect(() => {
+    setDraft("");
+    setError(null);
+  }, [submission._id]);
 
   async function handleSend() {
     if (!draft.trim()) return;
@@ -63,8 +88,13 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
   const canReply = Boolean(submission.email);
 
   return (
-    <div className="card chat-card">
+    <div className="chat-pane">
       <header className="chat-head">
+        {/* Only reachable on a narrow screen, where the list and the thread take turns
+            using the whole width. */}
+        <button className="chat-back" onClick={onBack} aria-label="Back to conversations">
+          ‹
+        </button>
         <span className="chat-avatar">{initials(submission.name, submission.email)}</span>
         <div className="chat-who">
           <strong>{submission.name || "Unknown"}</strong>
@@ -89,10 +119,9 @@ function ConversationCard({ submission, onReplySent, guardAction }) {
               submission.emailSent ? (
                 <span className="delivery sent">Emailed</span>
               ) : (
-                // The raw provider error used to be printed in full inside the bubble,
-                // which buried the reply itself under a paragraph of API guidance. The
-                // state belongs in a chip; the detail belongs on hover, where someone
-                // debugging can still reach it.
+                // The provider's full error used to be printed inside the bubble, burying
+                // the reply under a paragraph of API guidance. The state belongs on a
+                // chip; the detail belongs on hover, where someone debugging can reach it.
                 <span className="delivery failed" title={submission.emailError || "Not sent"}>
                   Not delivered
                 </span>
@@ -140,6 +169,7 @@ export default function Reviews() {
     queryFn: api.getContactSubmissions,
   });
   const [tab, setTab] = useState("shopify");
+  const [openId, setOpenId] = useState(null);
 
   function handleReplySent(updated) {
     queryClient.setQueryData(["contactSubmissions"], (prev = []) =>
@@ -148,51 +178,111 @@ export default function Reviews() {
   }
 
   const filtered = submissions.filter((s) => s.platform === tab);
-  // Ten conversations to a page: each one is a whole thread rather than a table row, so
-  // the same 25 that suits a list would be a very long scroll here.
   const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(filtered, {
-    pageSize: 10,
+    pageSize: 12,
     resetKey: tab,
   });
 
+  // On a wide screen the thread pane should never sit empty while conversations are
+  // listed beside it, so the first one opens by itself. On a narrow screen it must stay
+  // closed — there the list is the page, and opening a thread would skip straight past it.
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 860px)").matches;
+    if (narrow || visible.length === 0) return;
+    if (!visible.some((s) => s._id === openId)) setOpenId(visible[0]._id);
+  }, [visible, openId]);
+
+  const open = filtered.find((s) => s._id === openId) || null;
+
   return (
     <div>
-      {/* Paging lands here rather than on the tab row: this page is the list, so its
-          heading is the top of it. */}
       <h2 ref={topRef}>Contact form conversations</h2>
       <p style={{ color: "var(--text-muted)", marginTop: -8 }}>
         Every customer question submitted through the website contact forms, the AI's auto-reply, and a place to send your own reply.
       </p>
 
-      <div className="form-row" style={{ marginBottom: 8 }}>
-        {TABS.map((t) => (
-          <button key={t.key} className={`btn ${tab === t.key ? "" : "secondary"}`} onClick={() => setTab(t.key)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
       {error && <div className="card" style={{ color: "#a71d1d" }}>{error.message}</div>}
 
       {loading ? (
         <Loader />
-      ) : filtered.length === 0 ? (
-        <div className="card">
-          <p style={{ color: "var(--text-muted)", margin: 0 }}>
-            No {TABS.find((t) => t.key === tab)?.label} contact form submissions yet.
-          </p>
-        </div>
       ) : (
-        <>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 12px" }}>
-            {total} conversation{total === 1 ? "" : "s"}
-            {pageCount > 1 ? ` — showing ${from}–${to}` : ""}
-          </p>
-          {visible.map((s) => (
-            <ConversationCard key={s._id} submission={s} onReplySent={handleReplySent} guardAction={guardAction} />
-          ))}
-          <Pager page={page} pageCount={pageCount} onChange={goToPage} />
-        </>
+        // Two panes side by side, and one at a time below the breakpoint — the thread
+        // covers the list there, with the back arrow in its header to return.
+        <div className={`chat-layout${open ? " thread-open" : ""}`}>
+          <aside className="chat-list">
+            <div className="chat-list-head">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  className={`btn ${tab === t.key ? "" : "secondary"}`}
+                  onClick={() => {
+                    setTab(t.key);
+                    setOpenId(null);
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {filtered.length === 0 ? (
+              <p className="chat-list-empty">
+                No {TABS.find((t) => t.key === tab)?.label} submissions yet.
+              </p>
+            ) : (
+              <>
+                <p className="chat-list-count">
+                  {total} conversation{total === 1 ? "" : "s"}
+                  {pageCount > 1 ? ` — ${from}–${to}` : ""}
+                </p>
+                <ul className="chat-list-items">
+                  {visible.map((s) => {
+                    const last = lastMessage(s);
+                    return (
+                      <li key={s._id}>
+                        <button
+                          className={`chat-list-item${s._id === openId ? " active" : ""}`}
+                          onClick={() => setOpenId(s._id)}
+                        >
+                          <span className="chat-avatar small">{initials(s.name, s.email)}</span>
+                          <span className="chat-list-body">
+                            <span className="chat-list-top">
+                              <span className="chat-list-name">{s.name || s.email || "Unknown"}</span>
+                              <span className="chat-list-time">{listStamp(last.at)}</span>
+                            </span>
+                            <span className="chat-list-preview">
+                              {last.mine && <span className="chat-list-you">You: </span>}
+                              {last.text}
+                            </span>
+                          </span>
+                          {s.aiReply && !s.emailSent && !s.manualReply && (
+                            <span className="chat-list-flag" title="The reply was not delivered">
+                              !
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <Pager page={page} pageCount={pageCount} onChange={goToPage} />
+              </>
+            )}
+          </aside>
+
+          {open ? (
+            <ConversationView
+              submission={open}
+              onReplySent={handleReplySent}
+              guardAction={guardAction}
+              onBack={() => setOpenId(null)}
+            />
+          ) : (
+            <div className="chat-pane empty">
+              <p>{filtered.length === 0 ? "Nothing to show yet." : "Pick a conversation to read it."}</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

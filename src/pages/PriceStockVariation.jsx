@@ -151,7 +151,7 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
               {visible.map((e) => (
                 <tr key={e._id}>
                   <td>{new Date(e.checkedAt).toLocaleString()}</td>
-                  <td>
+                  <td className="product-name">
                     <a href={toDisplayUrl(e.productUrl)} target="_blank" rel="noopener noreferrer" title={e.productName}>
                       {shortenName(e.productName)}
                     </a>
@@ -316,7 +316,7 @@ export default function PriceStockVariation() {
             <tbody>
               {flaggedPage.visible.map((p) => (
                 <tr key={p._id}>
-                  <td><ProductLink product={p} /></td>
+                  <td className="product-name"><ProductLink product={p} /></td>
                   <td>{p.site}</td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "—"}</td>
@@ -395,7 +395,7 @@ export default function PriceStockVariation() {
             <tbody>
               {varied.map(({ product: p, stats }) => (
                 <tr key={p._id}>
-                  <td><ProductLink product={p} /></td>
+                  <td className="product-name"><ProductLink product={p} /></td>
                   <td>{p.site}</td>
                   <td>₹{p.lastPrice}</td>
                   <td>₹{stats.min}</td>

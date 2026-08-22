@@ -236,8 +236,12 @@ th { color: var(--text-muted); font-weight: 600; background: var(--blue-50); }
    column moved in front of the name — at which point the name stopped being truncated and
    ran straight over the Site column beside it. A name is the thing that needs the
    ellipsis, wherever it happens to sit. */
-td.product-name a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-th, td:not(.product-name) { white-space: nowrap; }
+/* Two shapes of table share this. Most put the product name in the first cell; the
+   products table puts a checkbox there and marks its name cell instead. Naming only the
+   class covered the second and silently broke the first — long names stopped truncating
+   and ran over the Site column beside them. */
+td:first-child a, td.product-name a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+th, td:not(:first-child):not(.product-name) { white-space: nowrap; }
 
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; display: inline-block; }
 .badge.in_stock { background: #dcf5e3; color: #1c7a3c; }
@@ -609,10 +613,103 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 .target-cell input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
 /* ── Contact form conversations ──────────────────────────────────────────────
-   Read as a chat, because that is what it is: a question and the replies to it.
-   Side carries the speaker — customer left, us right — so the reader never has to
-   parse a label to know who said what. */
-.chat-card { padding: 0; overflow: hidden; }
+   A list of threads beside the open one, the way a messaging app lays this out. Both
+   panes scroll inside themselves rather than growing the page, so the composer stays
+   where the thumb expects it. */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.chat-list {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(125, 0, 56, 0.08);
+  display: flex;
+  flex-direction: column;
+  max-height: 74vh;
+  overflow-y: auto;
+  padding: 10px;
+  gap: 8px;
+}
+.chat-list-head { display: flex; gap: 8px; }
+.chat-list-head .btn { flex: 1; padding: 6px 8px; font-size: 12px; }
+.chat-list-count { font-size: 11.5px; color: var(--text-muted); margin: 0; }
+.chat-list-empty { font-size: 13px; color: var(--text-muted); margin: 8px 2px; }
+.chat-list-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.chat-list-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.chat-list-item:hover { background: var(--blue-50); }
+.chat-list-item.active { background: var(--blue-200); }
+.chat-list-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.chat-list-top { display: flex; align-items: baseline; gap: 8px; }
+.chat-list-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-list-time { font-size: 10.5px; color: var(--text-muted); white-space: nowrap; }
+/* One line of preview, cut with an ellipsis — a thread's whole first paragraph in the
+   list would push every other conversation off the screen. */
+.chat-list-preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-list-you { color: var(--blue-900); }
+.chat-list-flag {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  background: #a71d1d;
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-pane {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(125, 0, 56, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 74vh;
+}
+.chat-pane.empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
 
 .chat-head {
   display: flex;
@@ -621,6 +718,18 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   padding: 12px 16px;
   background: var(--blue-900);
   color: var(--white);
+  flex: none;
+}
+/* Only a narrow screen needs it — on a desktop the list never left the screen. */
+.chat-back {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--white);
+  font-size: 26px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
 }
 .chat-avatar {
   width: 34px;
@@ -635,17 +744,22 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   font-weight: 700;
   flex: none;
 }
+.chat-avatar.small { width: 30px; height: 30px; font-size: 11px; }
 .chat-who { display: flex; flex-direction: column; min-width: 0; }
 .chat-who strong { font-size: 14px; }
 .chat-contact { font-size: 12px; opacity: 0.85; overflow-wrap: anywhere; }
 .chat-date { margin-left: auto; font-size: 12px; opacity: 0.85; white-space: nowrap; }
 
+/* The thread is the only part that scrolls, so the header stays put above it and the
+   composer stays put below it. */
 .chat-thread {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 16px;
   background: var(--blue-50);
+  overflow-y: auto;
+  flex: 1;
 }
 
 .bubble-row { display: flex; }
@@ -660,39 +774,19 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   line-height: 1.5;
   color: var(--text);
   box-shadow: 0 1px 2px rgba(125, 0, 56, 0.10);
-  position: relative;
 }
 /* One square corner on the speaker's side does the job a drawn tail would, without a
    pseudo-element that has to be kept in sync with the bubble's own background. */
 .bubble-row.in .bubble { background: var(--white); border-top-left-radius: 3px; }
 .bubble-row.out .bubble { background: #fbe3ec; border-top-right-radius: 3px; }
 
-.bubble-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--blue-900);
-  margin-bottom: 3px;
-}
+.bubble-label { font-size: 11px; font-weight: 700; color: var(--blue-900); margin-bottom: 3px; }
 .bubble-text { white-space: pre-wrap; overflow-wrap: anywhere; }
-.bubble-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
-}
+.bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .bubble-time { font-size: 10.5px; color: var(--text-muted); }
 
-/* Delivery state as a chip. The provider's full error text used to be printed inside the
-   bubble, which buried the reply under a paragraph of API guidance; it is on the chip's
-   tooltip now. */
-.delivery {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
+/* Delivery state as a chip; the provider's full error is on its tooltip. */
+.delivery { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
 .delivery.sent { background: #e3f1e8; color: #1c6e3a; }
 .delivery.failed { background: #fae4e4; color: #9c1b1b; cursor: help; }
 
@@ -703,14 +797,9 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   padding: 10px 12px;
   background: var(--white);
   border-top: 1px solid var(--border);
+  flex: none;
 }
-.chat-composer input {
-  flex: 1;
-  min-width: 0;
-  border-radius: 999px;
-  padding: 9px 14px;
-  font-size: 13px;
-}
+.chat-composer input { flex: 1; min-width: 0; border-radius: 999px; padding: 9px 14px; font-size: 13px; }
 .chat-send {
   width: 36px;
   height: 36px;
@@ -729,6 +818,18 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 .chat-send:not(:disabled):hover { background: var(--blue-900); }
 .chat-error { color: #a71d1d; font-size: 13px; margin: 0; padding: 0 16px 12px; }
 .muted { color: var(--text-muted); }
+
+/* Below this width the two panes take turns using the whole screen, which is how a
+   messaging app behaves on a phone: the list is the page until a thread is opened, and
+   the back arrow returns to it. */
+@media (max-width: 860px) {
+  .chat-layout { grid-template-columns: 1fr; }
+  .chat-list { max-height: none; }
+  .chat-pane { max-height: 78vh; }
+  .chat-back { display: block; }
+  .chat-layout.thread-open .chat-list { display: none; }
+  .chat-layout:not(.thread-open) .chat-pane { display: none; }
+}
 
 @media (max-width: 620px) {
   .bubble { max-width: 88%; }
