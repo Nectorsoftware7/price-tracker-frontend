@@ -224,6 +224,64 @@ function ComparisonDot({ cx, cy, payload }) {
   );
 }
 
+// "How often did this change", as opposed to the movers chart's "by how much".
+//
+// The two answer different questions and can disagree completely: a listing that flips
+// between two prices all fortnight and ends where it began is invisible above, yet is
+// exactly the one worth asking a marketplace about. Same for stock — a product that has
+// gone in and out six times is a supply problem the current-status donut cannot show.
+//
+// Horizontal, because the categories are product names; a column chart would rotate or
+// truncate every one of them.
+function ChurnChart({ title, subtitle, data, unit, emptyText, narrow }) {
+  const rows = data.map((d) => ({
+    ...d,
+    label: d.name.length > (narrow ? 18 : 32) ? `${d.name.slice(0, (narrow ? 18 : 32) - 1)}…` : d.name,
+  }));
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{title}</h3>
+      <p style={{ color: "var(--text-muted)", marginTop: -8, fontSize: 13 }}>{subtitle}</p>
+      {rows.length === 0 ? (
+        <p style={{ color: "var(--text-muted)" }}>{emptyText}</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={Math.max(180, rows.length * 30 + 44)}>
+          <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 34, left: 4, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+            <XAxis
+              type="number"
+              allowDecimals={false}
+              tick={{ fontSize: 10.5, fill: "var(--text-muted)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="label"
+              width={narrow ? 110 : 200}
+              tick={{ fontSize: 10.5, fill: "var(--text)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: "rgba(0,0,0,0.03)" }}
+              content={
+                <CustomTooltip
+                  formatter={(v, row) => `${row.site}: ${v} ${unit}${v === 1 ? "" : "s"} in ${WINDOW_DAYS} days`}
+                />
+              }
+            />
+            <Bar dataKey="changes" fill={BAR_COLOR} radius={[0, 4, 4, 0]} maxBarSize={18}>
+              <LabelList dataKey="changes" position="right" fill="var(--text-muted)" fontSize={11} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
 function StatTile({ label, value, note }) {
   return (
     <div className="stat-tile">
@@ -656,6 +714,27 @@ export default function Dashboard() {
             )}
           </>
         )}
+      </div>
+
+      {/* Frequency, next to the magnitude chart above — the same fortnight, asked the
+          other way round. */}
+      <div className="chart-grid">
+        <ChurnChart
+          title="Changes price most often"
+          subtitle={`How many times each listing's price moved in the last ${WINDOW_DAYS} days.`}
+          data={dashboard?.priceChurn ?? []}
+          unit="price change"
+          emptyText="No price changed in this window."
+          narrow={narrow}
+        />
+        <ChurnChart
+          title="Changes stock most often"
+          subtitle={`How many times each listing went in or out of stock in the last ${WINDOW_DAYS} days.`}
+          data={dashboard?.stockChurn ?? []}
+          unit="stock change"
+          emptyText="No stock status changed in this window."
+          narrow={narrow}
+        />
       </div>
     </div>
   );
