@@ -629,16 +629,27 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 .chat-page h2 { margin: 0 0 2px; }
 .chat-page-lede { color: var(--text-muted); font-size: 13px; margin: 0 0 10px; }
 
+/* The page is a column that fills its share of .main, and the layout takes whatever that
+   column has left under the heading. No calc: a fixed number would have to guess at the
+   heading's height, and it guessed wrong on short windows — the reply box ended up below
+   the fold on one, and a strip of dead page showed under the panes on another. Letting
+   the box measure itself is right at every height. */
+.chat-page { display: flex; flex-direction: column; min-height: 0; }
+/* .main gives its first child "flex: 1 0 auto", which lets that child grow but never
+   shrink — so this page sized itself to the conversation list's content and ran past the
+   bottom of the window instead of fitting inside it. Same specificity as that rule, later
+   in the file, so this wins; min-height:0 is what actually permits the shrink, since a
+   flex item defaults to refusing to go below its content. */
+.main > .chat-page { flex: 1 1 auto; min-height: 0; }
+/* The footer's usual breathing room reads as leftover space when the thing above it is
+   meant to reach the bottom of the window. */
+.chat-page + .app-footer { margin-top: 12px; padding-top: 10px; }
+
 .chat-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 14px;
-  /* Sized to what is left rather than to a share of the window. At 74vh the panes plus
-     the heading came to more than the window on a short laptop screen, and the reply box
-     ended up below the fold — present but unreachable without scrolling the page under
-     it. The 190px is the measured distance from the top of the window to the top of this
-     layout, plus a little breathing room at the bottom. */
-  height: calc(100dvh - 200px);
+  flex: 1;
   min-height: 380px;
 }
 
