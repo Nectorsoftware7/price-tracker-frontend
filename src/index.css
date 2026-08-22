@@ -600,7 +600,15 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   gap: 14px;
   margin-top: 12px;
 }
-.pager-status { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+/* nowrap because it is a label, not a sentence: in the narrow conversation list it was
+   breaking across three lines as "Page / 1 of / 2". */
+.pager-status { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The pager sits inside a 320px column here, so it takes the compact treatment rather
+   than the full-width one the tables use. */
+.chat-list .pager { gap: 8px; margin-top: 2px; }
+.chat-list .pager .btn { padding: 4px 10px; font-size: 12px; }
+.chat-list .pager-status { font-size: 11.5px; }
 
 /* The inline target-price editor. The input is sized to the digits it holds rather than
    filling the cell, so the button sits next to it instead of below. */
