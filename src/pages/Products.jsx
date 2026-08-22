@@ -546,7 +546,9 @@ export default function Products() {
               ))}
             </datalist>
           </div>
-          <div className="form-row">
+          {/* btn-group keeps this to its own width; in a form-row it stretched across the
+              whole form on a phone. */}
+          <div className="btn-group">
             <button className="btn" type="submit" disabled={adding}>
               {adding ? (editingId ? "Saving & checking..." : "Adding & checking...") : editingId ? "Save changes" : "Add product"}
             </button>
@@ -566,19 +568,19 @@ export default function Products() {
           between is fine too, it's ignored). Not sure of the format — download the template first.
         </p>
         <div className="form-row">
-          <button type="button" className="btn secondary" onClick={handleDownloadTemplate}>
-            Download template
-          </button>
-        </div>
-        <div className="form-row" style={{ marginTop: 8 }}>
           <input type="file" accept=".xlsx,.xls,.csv" onChange={handleBulkFileChange} />
         </div>
         {bulkFileName && (
-          <p style={{ fontSize: 13, color: "#666" }}>
+          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
             {bulkFileName} — {bulkRows.length} product{bulkRows.length === 1 ? "" : "s"} found
           </p>
         )}
-        <div className="form-row" style={{ marginTop: 8 }}>
+        {/* The two buttons belong together — one fetches the format, the other uses it —
+            so they share a row that stays a row on a phone. */}
+        <div className="btn-group" style={{ marginTop: 8 }}>
+          <button type="button" className="btn secondary" onClick={handleDownloadTemplate}>
+            Download template
+          </button>
           <button className="btn" disabled={bulkImporting || bulkRows.length === 0} onClick={guardAction(handleBulkImport)}>
             {bulkImporting ? "Importing..." : `Import ${bulkRows.length || ""} product${bulkRows.length === 1 ? "" : "s"}`}
           </button>
@@ -640,12 +642,16 @@ export default function Products() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <button className="btn secondary" onClick={handleExport} disabled={sorted.length === 0}>
-                Export to Excel
-              </button>
-              <button className="btn" disabled={checkingAll} onClick={guardAction(handleCheckAll)}>
-                {checkingAll ? "Checking all products..." : "Check all products"}
-              </button>
+              {/* Paired, so on a phone they sit beside each other instead of taking a
+                  full-width row each below the filters. */}
+              <div className="btn-group">
+                <button className="btn secondary" onClick={handleExport} disabled={sorted.length === 0}>
+                  Export to Excel
+                </button>
+                <button className="btn" disabled={checkingAll} onClick={guardAction(handleCheckAll)}>
+                  {checkingAll ? "Checking all products..." : "Check all products"}
+                </button>
+              </div>
             </div>
             {/* Only present when something is selected — an always-visible bar of disabled
                 buttons is chrome the reader has to learn to ignore. */}
