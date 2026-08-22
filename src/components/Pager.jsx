@@ -11,10 +11,27 @@ import { useEffect, useMemo, useRef, useState } from "react";
 export function usePagination(items, { pageSize = 25, resetKey = "" } = {}) {
   const [page, setPage] = useState(1);
   const topRef = useRef(null);
+  const scrollAfterRender = useRef(false);
 
   useEffect(() => {
     setPage(1);
   }, [resetKey]);
+
+  // Scrolling has to happen *after* React has committed the new page, not while asking
+  // for it. The last page usually holds fewer rows than a full one, so the list shrinks
+  // as it re-renders; scrolling first meant aiming at a layout that no longer existed by
+  // the time the browser settled, and the view came to rest past the end of the list —
+  // on the pager itself, with the next card already showing beneath it.
+  useEffect(() => {
+    if (!scrollAfterRender.current) return;
+    scrollAfterRender.current = false;
+    topRef.current?.scrollIntoView({
+      // Someone who asked the system to reduce motion should still be taken there, just
+      // not flung.
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [page]);
 
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
   // Clamped rather than corrected in state: a list that shrinks under the current page
@@ -29,13 +46,8 @@ export function usePagination(items, { pageSize = 25, resetKey = "" } = {}) {
   // foot of the list, where the buttons are — so the next page opens somewhere in its
   // middle. Going back to the head of the list is what makes it readable from row one.
   function goToPage(next) {
+    scrollAfterRender.current = true;
     setPage(next);
-    topRef.current?.scrollIntoView({
-      // Someone who asked the system to reduce motion should still be taken there, just
-      // not flung.
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "start",
-    });
   }
 
   return {

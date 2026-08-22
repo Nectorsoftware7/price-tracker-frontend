@@ -157,12 +157,14 @@ export default function Reviews() {
 
   return (
     <div>
-      <h2>Contact form conversations</h2>
+      {/* Paging lands here rather than on the tab row: this page is the list, so its
+          heading is the top of it. */}
+      <h2 ref={topRef}>Contact form conversations</h2>
       <p style={{ color: "var(--text-muted)", marginTop: -8 }}>
         Every customer question submitted through the website contact forms, the AI's auto-reply, and a place to send your own reply.
       </p>
 
-      <div className="form-row" ref={topRef} style={{ marginBottom: 8 }}>
+      <div className="form-row" style={{ marginBottom: 8 }}>
         {TABS.map((t) => (
           <button key={t.key} className={`btn ${tab === t.key ? "" : "secondary"}`} onClick={() => setTab(t.key)}>
             {t.label}
