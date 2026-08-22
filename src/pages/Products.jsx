@@ -756,12 +756,18 @@ export default function Products() {
                   </td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
                   <td title={p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}>{formatChecked(p.lastCheckedAt)}</td>
-                  <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                  {/* The flex lives on an inner div, not on the cell. A td set to
+                      display:flex stops being a table cell, so it no longer shares its
+                      row's height or baseline — which showed as the row's bottom border
+                      breaking step right where the buttons are. */}
+                  <td>
+                    <div className="row-actions">
                     <button className="btn secondary" disabled={busyId === p._id} onClick={guardAction(() => handleCheckNow(p._id))}>
                       {busyId === p._id ? "Checking..." : "Check now"}
                     </button>
                     <button className="btn secondary" onClick={guardAction(() => handleEditClick(p))}>Edit</button>
-                    <button className="btn danger" onClick={guardAction(() => handleDelete(p._id))}>Delete</button>
+                      <button className="btn danger" onClick={guardAction(() => handleDelete(p._id))}>Delete</button>
+                    </div>
                   </td>
                 </tr>
               ))}

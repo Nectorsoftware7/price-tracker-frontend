@@ -760,3 +760,9 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 /* A selected row is tinted as well as ticked — the checkbox alone is easy to lose track of
    once the eye is halfway across a wide table. */
 tr.row-selected td { background: var(--blue-50); }
+
+/* The three per-row buttons. This sits on a div inside the cell rather than on the cell:
+   a td set to display:flex is no longer a table cell, so it stops sharing its row's height
+   and its bottom border lands at a different place from its neighbours' — which reads as
+   the row tearing apart right where the buttons are. */
+.row-actions { display: flex; gap: 6px; justify-content: center; align-items: center; }
