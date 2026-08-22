@@ -844,8 +844,30 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
    messaging app behaves on a phone: the list is the page until a thread is opened, and
    the back arrow returns to it. */
 @media (max-width: 860px) {
-  /* A little more is taken off here for the fixed bottom navigation. */
-  .chat-layout { grid-template-columns: 1fr; height: calc(100dvh - 250px); }
+  .chat-layout { grid-template-columns: 1fr; height: auto; }
+  .chat-list { height: auto; max-height: none; }
+
+  /* An open thread takes the screen, pinned between the navbar and the tab bar, the way
+     a messaging app does it. Fixed rather than sized by a calc: the space above depends
+     on how the heading happens to wrap, and the space below on the device's own home
+     indicator, so any number written here would be wrong on some phone. Anchoring to
+     both edges is right on all of them.
+
+     The 60px is the tab bar's own height; env() adds whatever the device reserves under
+     it, exactly as .bottom-nav's padding does. */
+  .chat-layout.thread-open .chat-pane {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    height: auto;
+    max-height: none;
+    z-index: 20;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
   .chat-back { display: block; }
   .chat-layout.thread-open .chat-list { display: none; }
   .chat-layout:not(.thread-open) .chat-pane { display: none; }
