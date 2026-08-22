@@ -616,11 +616,22 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
    A list of threads beside the open one, the way a messaging app lays this out. Both
    panes scroll inside themselves rather than growing the page, so the composer stays
    where the thumb expects it. */
+/* The heading block is kept tight here, because every pixel it takes is a pixel off the
+   conversation below it — which is the whole page. */
+.chat-page h2 { margin: 0 0 2px; }
+.chat-page-lede { color: var(--text-muted); font-size: 13px; margin: 0 0 10px; }
+
 .chat-layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 14px;
-  align-items: start;
+  /* Sized to what is left rather than to a share of the window. At 74vh the panes plus
+     the heading came to more than the window on a short laptop screen, and the reply box
+     ended up below the fold — present but unreachable without scrolling the page under
+     it. The 190px is the measured distance from the top of the window to the top of this
+     layout, plus a little breathing room at the bottom. */
+  height: calc(100dvh - 200px);
+  min-height: 380px;
 }
 
 .chat-list {
@@ -630,7 +641,8 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   box-shadow: 0 1px 3px rgba(125, 0, 56, 0.08);
   display: flex;
   flex-direction: column;
-  max-height: 74vh;
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   padding: 10px;
   gap: 8px;
@@ -701,7 +713,8 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 74vh;
+  height: 100%;
+  min-height: 0;
 }
 .chat-pane.empty {
   align-items: center;
@@ -823,9 +836,8 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
    messaging app behaves on a phone: the list is the page until a thread is opened, and
    the back arrow returns to it. */
 @media (max-width: 860px) {
-  .chat-layout { grid-template-columns: 1fr; }
-  .chat-list { max-height: none; }
-  .chat-pane { max-height: 78vh; }
+  /* A little more is taken off here for the fixed bottom navigation. */
+  .chat-layout { grid-template-columns: 1fr; height: calc(100dvh - 250px); }
   .chat-back { display: block; }
   .chat-layout.thread-open .chat-list { display: none; }
   .chat-layout:not(.thread-open) .chat-pane { display: none; }

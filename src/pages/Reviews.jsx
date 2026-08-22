@@ -195,9 +195,9 @@ export default function Reviews() {
   const open = filtered.find((s) => s._id === openId) || null;
 
   return (
-    <div>
+    <div className="chat-page">
       <h2 ref={topRef}>Contact form conversations</h2>
-      <p style={{ color: "var(--text-muted)", marginTop: -8 }}>
+      <p className="chat-page-lede">
         Every customer question submitted through the website contact forms, the AI's auto-reply, and a place to send your own reply.
       </p>
 
