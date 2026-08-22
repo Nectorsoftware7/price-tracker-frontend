@@ -62,7 +62,12 @@ export const api = {
     request(`/products/stats${from && to ? `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` : ""}`),
   getDashboard: (days = 14) => request(`/products/dashboard?days=${days}`),
   getStockEvents: (id) => request(`/products/${id}/stock-events`),
-  getAllStockEvents: (hours = 24) => request(`/products/stock-events?hours=${hours}`),
+  getAllStockEvents: ({ hours = 24, from, to } = {}) =>
+    request(
+      from && to
+        ? `/products/stock-events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+        : `/products/stock-events?hours=${hours}`
+    ),
   checkNow: (id) => request(`/products/${id}/check-now`, { method: "POST" }),
   checkAll: () => request("/products/check-all", { method: "POST" }),
 

@@ -43,10 +43,15 @@ function todayStr() {
 // when it happened or what changed before it).
 function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [logFrom, setLogFrom] = useState("");
+  const [logTo, setLogTo] = useState("");
+  // Both ends are needed before the range means anything; until then the page's own
+  // 24h/7d/15d buttons decide the window.
+  const useLogRange = Boolean(logFrom && logTo);
 
   const { data: events = [], isLoading, error } = useQuery({
-    queryKey: ["stockEvents", "recent", hours],
-    queryFn: () => api.getAllStockEvents(hours),
+    queryKey: ["stockEvents", "recent", useLogRange ? `${logFrom}..${logTo}` : hours],
+    queryFn: () => (useLogRange ? api.getAllStockEvents({ from: logFrom, to: logTo }) : api.getAllStockEvents({ hours })),
   });
 
   const filtered = useMemo(
@@ -55,19 +60,45 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
         (e) =>
           (siteFilter === "all" || e.productSite === siteFilter) &&
           (statusFilter === "all" || e.status === statusFilter) &&
-          new Date(e.checkedAt).getTime() >= activityCutoff
+          // The cutoff belongs to the preset buttons. With an explicit range the server
+          // has already applied it, and re-applying the preset here would quietly clip
+          // any date older than the button currently selected.
+          (useLogRange || new Date(e.checkedAt).getTime() >= activityCutoff)
       ),
-    [events, siteFilter, statusFilter, activityCutoff]
+    [events, siteFilter, statusFilter, activityCutoff, useLogRange]
   );
 
+  // Fifteen rather than the 25 the tables use: this is a log of short lines, and a full
+  // day of checks lands just about on 25 — which left it showing one page and no pager
+  // at all, looking like paging had not been applied.
   const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(filtered, {
-    resetKey: statusFilter,
+    pageSize: 15,
+    resetKey: `${statusFilter}|${logFrom}|${logTo}|${hours}`,
   });
 
   return (
     <div className="card">
       <div className="form-row" ref={topRef} style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>🕐 Recent stock changes</h3>
+        <div className="log-range">
+          <label>
+            From <input type="date" value={logFrom} max={logTo || undefined} onChange={(e) => setLogFrom(e.target.value)} />
+          </label>
+          <label>
+            To <input type="date" value={logTo} min={logFrom || undefined} onChange={(e) => setLogTo(e.target.value)} />
+          </label>
+          {useLogRange && (
+            <button
+              className="btn secondary"
+              onClick={() => {
+                setLogFrom("");
+                setLogTo("");
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="all">All stock statuses</option>
           <option value="in_stock">In stock</option>

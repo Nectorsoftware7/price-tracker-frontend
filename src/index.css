@@ -720,3 +720,10 @@ th.sortable:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 
 @media (max-width: 620px) {
   .bubble { max-width: 88%; }
 }
+
+/* Date range for the stock-change log. Labels sit inline with their inputs so the pair
+   reads as one control rather than two loose fields. */
+.log-range { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.log-range label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); }
+.log-range input { font-size: 12px; padding: 5px 7px; }
+.log-range .btn { padding: 5px 10px; font-size: 12px; }
