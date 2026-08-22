@@ -78,11 +78,16 @@ function CustomTooltip({ active, payload, label, formatter }) {
 // its red is the same red the badge uses on every other page, so recolouring it to the
 // brand teal would throw away meaning the reader already knows how to read.
 function SiteBarChart({ title, subtitle, data, color, emptyText, formatter, narrow }) {
-  // Columns stay columns on every screen. What changes on a phone is that the plot keeps
-  // the width it needs — about 58px per site so the tilted names clear each other — and
-  // the card scrolls sideways to reach the rest, rather than the chart being squeezed
-  // until the labels collide.
-  const plotWidth = narrow ? data.length * 58 + 60 : undefined;
+  // About 58px per site is what the tilted names need to clear each other. That one number
+  // does two jobs, depending on which way the card is short:
+  //
+  //  - on a phone it is a minimum, and the card scrolls sideways to reach the rest
+  //  - on a desktop it is a maximum, so a chart with few categories stops stretching to
+  //    fill the card. Left to itself recharts widens each category band to use the space,
+  //    which with four sites left the bars marooned in their own gaps while the nine-site
+  //    chart beside it sat neatly together. Capping the plot keeps both at the same
+  //    density; the leftover width is simply space the chart does not need.
+  const plotWidth = data.length * 58 + 60;
 
   return (
     <div className="card">
@@ -92,7 +97,7 @@ function SiteBarChart({ title, subtitle, data, color, emptyText, formatter, narr
         <p style={{ color: "var(--text-muted)" }}>{emptyText}</p>
       ) : (
         <div className={narrow ? "chart-scroll" : undefined}>
-          <div style={{ minWidth: plotWidth }}>
+          <div style={narrow ? { minWidth: plotWidth } : { maxWidth: plotWidth }}>
             <ResponsiveContainer width="100%" height={296}>
               {/* Top margin leaves room for the value labels above each bar; the bottom
                   one for the tilted site names below. */}
