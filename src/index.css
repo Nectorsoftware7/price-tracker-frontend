@@ -216,7 +216,16 @@ a { color: var(--blue-900); }
    content needed, which is what spread Product/Site/etc. so far apart. */
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.table-products { min-width: 1124px; } /* sum of its colgroup: 34+220+80+90+170+100+150+280 */
+/* Sum of its colgroup: 30+200+102+68+150+108+100+198. Two columns are sized by their worst
+   case rather than their typical one — Site has to hold "woocommerce" and Stock has to
+   hold "In stock (1009)", and both were clipping into the column beside them. The name
+   gives up the width for it, since it is the one field that truncates gracefully.
+   The total clears the card at 1280px wide; the wrapper still scrolls below that, where
+   nothing would make eight columns fit. */
+.table-products { min-width: 956px; font-size: 13px; }
+.table-products th, .table-products td { padding: 8px 6px; }
+/* The three action buttons have to sit on one line inside 214px. */
+.table-products td .btn { padding: 4px 8px; font-size: 12px; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { color: var(--text-muted); font-weight: 600; background: var(--blue-50); }
 /* Product titles run long (some 100+ characters) — truncating to one line with an

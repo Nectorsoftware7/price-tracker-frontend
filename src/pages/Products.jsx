@@ -51,6 +51,18 @@ function TargetPriceCell({ product, draft, onDraft, onSave, saving, guard }) {
   );
 }
 
+// "22 Aug, 15:34" instead of "22/08/2026, 15:34:55". The year is always this one and the
+// seconds are never the point, and between them they made this the widest column in the
+// table — which is what pushed the whole thing into a horizontal scrollbar. The full
+// timestamp stays on the cell's tooltip.
+function formatChecked(value) {
+  if (!value) return "never";
+  const date = new Date(value);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${date.getDate()} ${months[date.getMonth()]}, ${time}`;
+}
+
 // A header that sorts. The arrow only appears on the column actually in use — showing a
 // neutral marker on every column makes the active one harder to spot, not easier.
 // aria-sort is what tells a screen reader the same thing the arrow tells everyone else.
@@ -669,15 +681,18 @@ export default function Products() {
                 column is wide enough for all 3 buttons (Check now/Edit/Delete) side by
                 side without their text clipping, which % widths weren't guaranteeing
                 on narrow/mobile viewports even inside the horizontal-scroll wrapper. */}
+            {/* Sized to the widest thing each column actually holds — "woocommerce" for
+                Site, "In stock (53)" for Stock, the three buttons for Actions — so the
+                table fits its card instead of running off the side of it. */}
             <colgroup>
-              <col style={{ width: 34 }} />
-              <col style={{ width: 220 }} />
-              <col style={{ width: 80 }} />
-              <col style={{ width: 90 }} />
-              <col style={{ width: 170 }} />
-              <col style={{ width: 100 }} />
+              <col style={{ width: 30 }} />
+              <col style={{ width: 200 }} />
+              <col style={{ width: 102 }} />
+              <col style={{ width: 68 }} />
               <col style={{ width: 150 }} />
-              <col style={{ width: 280 }} />
+              <col style={{ width: 108 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 198 }} />
             </colgroup>
             <thead>
               <tr>
@@ -740,7 +755,7 @@ export default function Products() {
                     />
                   </td>
                   <td><StockBadge status={p.lastStock} quantity={p.lastStockQuantity} /></td>
-                  <td>{p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}</td>
+                  <td title={p.lastCheckedAt ? new Date(p.lastCheckedAt).toLocaleString() : "never"}>{formatChecked(p.lastCheckedAt)}</td>
                   <td style={{ display: "flex", gap: 8, justifyContent: "center" }}>
                     <button className="btn secondary" disabled={busyId === p._id} onClick={guardAction(() => handleCheckNow(p._id))}>
                       {busyId === p._id ? "Checking..." : "Check now"}
