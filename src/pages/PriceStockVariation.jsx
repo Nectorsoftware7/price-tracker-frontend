@@ -266,7 +266,7 @@ export default function PriceStockVariation() {
               </option>
             ))}
           </select>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="btn-group">
             {ACTIVITY_RANGES.map((r) => (
               <button
                 key={r.key}
@@ -339,7 +339,7 @@ export default function PriceStockVariation() {
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           <h3 style={{ margin: 0 }}>Price variation {useCustomRange ? `(${fromDate} → ${toDate})` : "(last 24h)"}</h3>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="btn-group">
             <button className={`btn ${sortDir === "desc" ? "" : "secondary"}`} onClick={() => setSortDir("desc")}>
               High → Low
             </button>

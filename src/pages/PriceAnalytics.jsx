@@ -176,7 +176,7 @@ export default function PriceAnalytics() {
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           <h3 ref={variationPage.topRef} style={{ margin: 0 }}>Price variations</h3>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="btn-group">
             {VARIATION_RANGES.map((r) => (
               <button
                 key={r.key}
@@ -265,7 +265,10 @@ export default function PriceAnalytics() {
       )}
 
       <div className="card" ref={chartRef}>
-        <div className="form-row">
+        {/* btn-group, not form-row: form-row turns into a column on a phone and stretches
+            its buttons to full width, which stacked these three on top of each other
+            while the range buttons above them stayed side by side. */}
+        <div className="btn-group" style={{ marginBottom: 10 }}>
           {[1, 7, 30].map((d) => (
             <button key={d} className={`btn ${days === d ? "" : "secondary"}`} onClick={() => setDays(d)}>
               {d}d

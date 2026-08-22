@@ -1003,3 +1003,10 @@ tr.row-selected td { background: var(--blue-50); }
     margin-right: auto;
   }
 }
+
+/* A row of small choices — date ranges, sort direction — that stays a row everywhere.
+   .form-row is for form fields and becomes a column on a phone with full-width controls,
+   which is right for inputs and wrong for a set of three short toggles.
+   The width here is two classes deep so it beats the mobile ".btn { width: 100% }". */
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-group .btn { width: auto; }
