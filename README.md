@@ -1,8 +1,7 @@
 # Price Tracker — Frontend
 
-React (Vite) admin dashboard for the price/stock tracker: add/edit/delete tracked products, view
-live price and stock, trigger manual or bulk checks, view price history, and manage AI-generated
-replies to product reviews and Contact Form 7 submissions.
+React (Vite) dashboard for the price and stock tracker: manage the tracked listings, read the
+charts, and reply to customers.
 
 The backend API lives in a separate repo — see
 [price-tracker-backend](https://github.com/Nectorsoftware7/price-tracker-backend).
@@ -11,11 +10,19 @@ The backend API lives in a separate repo — see
 
 - **React 18 + Vite** — SPA, built to static files
 - **React Router** — client-side routing
-- **Recharts** — price history charts
+- **TanStack Query** — data fetching and cache
+- **Recharts** — every chart on the dashboard and the analytics page
+- **SheetJS (`xlsx`)** — reads the bulk-import file and writes the product export
 - Built and served via **Nginx** in production (see `Dockerfile` / `nginx.conf`)
 
-No client-side environment variables are used — the app calls `/api/*` as a relative path (see
-`src/api.js`), and in production Nginx reverse-proxies that path to the backend.
+The app calls `/api/*` as a relative path (see `src/api.js`); in production the host rewrites that
+to the backend, so there is no API URL to configure here.
+
+## Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `VITE_GOOGLE_CLIENT_ID` | No | Enables the "Sign in with Google" button. Must match `GOOGLE_CLIENT_ID` on the backend, and this app's origin has to be listed as an authorised JavaScript origin in Google Cloud Console — otherwise Google refuses with "the given origin is not allowed for the given client ID". Username/password login works without it |
 
 ## Setup
 
@@ -47,13 +54,32 @@ location /api/ {
 
 ## Pages
 
-- **Products** — add a product (name, site, URL), see live price/stock, "Check now" for an
-  immediate check, "Check all products" for a bulk check, click a product for its price history.
-- **AI Replies** — Shopify/WordPress product-review auto-reply log and manual trigger.
-- **Contact Form** — Contact Form 7 submission log and AI-generated replies.
+- **Dashboard** — headline figures, then: products per marketplace, out-of-stock per marketplace,
+  the stock-status split, out-of-stock over time, the biggest price moves, which listings change
+  price and stock most often, and the same product's price on each marketplace it is listed on.
+- **Products** — add, edit and delete listings; search, sort and page the table; set a target price
+  from the row; bulk-import from Excel and export the current selection back out; "Check now" for a
+  single listing or "Check all products".
+- **Stock status** — what is flagged right now, and a log of every stock change, filterable by
+  status and by date range.
+- **Price Analytics** — price variation per listing over 24h / 7d / 15d, and a price history chart
+  per product.
+- **Contact Form** — customer submissions as chat threads, with the AI's draft reply and a box to
+  send your own.
+- **Users** — approve, deactivate and set roles.
+
+## Roles
+
+Three, all enforced by the API rather than only hidden here:
+
+| Role | Shown as | Can |
+|---|---|---|
+| `admin` | E-commerce Executive | Everything except user management |
+| `superadmin` | Superadmin | Everything |
+| `viewer` | Viewer | Read only — every page and button is visible, and any write is refused with a notice. Meant for demos |
 
 ## Login
 
-Dashboard access requires the `ADMIN_USERNAME`/`ADMIN_PASSWORD` credentials configured on the
-**backend** (this app has no credentials/env of its own — auth is entirely delegated to the API via
-JWT).
+Credentials come from the **backend** (`ADMIN_USERNAME` / `ADMIN_PASSWORD`, seeded there with
+`npm run seed:admin`). This app holds no credentials of its own; auth is delegated to the API and
+carried as a JWT.
