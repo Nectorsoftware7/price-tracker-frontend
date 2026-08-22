@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { api } from "../api";
 import StockBadge from "../components/StockBadge.jsx";
 import Loader from "../components/Loader.jsx";
+import { Pager, usePagination } from "../components/Pager.jsx";
 
 const SITE_OPTIONS = ["shopify", "woocommerce", "flipkart", "meesho", "jiomart", "tira", "nykaa", "snapdeal", "purplle", "myntra"];
 
@@ -58,6 +59,16 @@ export default function PriceAnalytics() {
     queryFn: () => api.getHistory(productId, days),
     enabled: Boolean(productId),
   });
+  // Fifteen to a page, matching the stock-change log — both are scan-and-pick lists
+  // rather than something read end to end.
+  //
+  // Declared above the early returns below: a hook skipped on the loading render and run
+  // on the next one changes the hook order between renders, which React refuses outright.
+  const variationPage = usePagination(priceVariations, {
+    pageSize: 15,
+    resetKey: `${variationRange}|${stockFilter}|${siteFilter}`,
+  });
+
   if (loading) return <Loader />;
   if (products.length === 0) return <p style={{ color: "#487474" }}>No products tracked yet — add one on the Products page first.</p>;
 
@@ -164,7 +175,7 @@ export default function PriceAnalytics() {
           view — and its View graph buttons scroll down to the chart below. */}
       <div className="card">
         <div className="form-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0 }}>Price variations</h3>
+          <h3 ref={variationPage.topRef} style={{ margin: 0 }}>Price variations</h3>
           <div style={{ display: "flex", gap: 8 }}>
             {VARIATION_RANGES.map((r) => (
               <button
@@ -208,7 +219,7 @@ export default function PriceAnalytics() {
                 </tr>
               </thead>
               <tbody>
-                {priceVariations.map(({ product: p, stats }) => (
+                {variationPage.visible.map(({ product: p, stats }) => (
                   <tr key={p._id}>
                     <td>
                       <a href={p.url.replace(/\.(js|json)$/, "")} target="_blank" rel="noopener noreferrer" title={p.name}>
@@ -236,6 +247,12 @@ export default function PriceAnalytics() {
             </table>
           </div>
         )}
+        {variationPage.pageCount > 1 && (
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "8px 0 0" }}>
+            Showing {variationPage.from}–{variationPage.to} of {variationPage.total}
+          </p>
+        )}
+        <Pager page={variationPage.page} pageCount={variationPage.pageCount} onChange={variationPage.goToPage} />
       </div>
 
       {history?.stats24h && (
