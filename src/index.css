@@ -766,3 +766,18 @@ tr.row-selected td { background: var(--blue-50); }
    and its bottom border lands at a different place from its neighbours' — which reads as
    the row tearing apart right where the buttons are. */
 .row-actions { display: flex; gap: 6px; justify-content: center; align-items: center; }
+
+/* Two figures to a row on a phone or a small tablet, rather than one.
+   auto-fit wants 190px per tile and a phone cannot give that twice, so the row collapsed
+   to a single column and pushed the charts a whole screen down.
+
+   This has to sit at the end of the file, after .stat-row's own declaration: an earlier
+   media query would lose to it on source order alone, both being single-class selectors.
+   That is exactly what happened on the first attempt. */
+@media (max-width: 860px) {
+  .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat-tile { padding: 12px 12px 10px; }
+  .stat-tile-value { font-size: 22px; }
+  .stat-tile-label { font-size: 10.5px; letter-spacing: 0.03em; }
+  .stat-tile-note { font-size: 11px; }
+}
