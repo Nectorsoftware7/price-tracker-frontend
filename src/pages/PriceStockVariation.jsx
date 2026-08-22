@@ -43,6 +43,7 @@ function todayStr() {
 // when it happened or what changed before it).
 function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [logSearch, setLogSearch] = useState("");
   const [logFrom, setLogFrom] = useState("");
   const [logTo, setLogTo] = useState("");
   // Both ends are needed before the range means anything; until then the page's own
@@ -54,32 +55,42 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
     queryFn: () => (useLogRange ? api.getAllStockEvents({ from: logFrom, to: logTo }) : api.getAllStockEvents({ hours })),
   });
 
-  const filtered = useMemo(
-    () =>
-      events.filter(
-        (e) =>
-          (siteFilter === "all" || e.productSite === siteFilter) &&
-          (statusFilter === "all" || e.status === statusFilter) &&
-          // The cutoff belongs to the preset buttons. With an explicit range the server
-          // has already applied it, and re-applying the preset here would quietly clip
-          // any date older than the button currently selected.
-          (useLogRange || new Date(e.checkedAt).getTime() >= activityCutoff)
-      ),
-    [events, siteFilter, statusFilter, activityCutoff, useLogRange]
-  );
+  const filtered = useMemo(() => {
+    const query = logSearch.trim().toLowerCase();
+    return events.filter(
+      (e) =>
+        (siteFilter === "all" || e.productSite === siteFilter) &&
+        (statusFilter === "all" || e.status === statusFilter) &&
+        // Name and marketplace together, matching how the Products table searches — the
+        // point of this box is following one product through the log, and that product is
+        // usually listed on more than one site.
+        (!query || `${e.productName} ${e.productSite}`.toLowerCase().includes(query)) &&
+        // The cutoff belongs to the preset buttons. With an explicit range the server
+        // has already applied it, and re-applying the preset here would quietly clip
+        // any date older than the button currently selected.
+        (useLogRange || new Date(e.checkedAt).getTime() >= activityCutoff)
+    );
+  }, [events, siteFilter, statusFilter, logSearch, activityCutoff, useLogRange]);
 
   // Fifteen rather than the 25 the tables use: this is a log of short lines, and a full
   // day of checks lands just about on 25 — which left it showing one page and no pager
   // at all, looking like paging had not been applied.
   const { page, pageCount, visible, goToPage, topRef, total, from, to } = usePagination(filtered, {
     pageSize: 15,
-    resetKey: `${statusFilter}|${logFrom}|${logTo}|${hours}`,
+    resetKey: `${statusFilter}|${logSearch}|${logFrom}|${logTo}|${hours}`,
   });
 
   return (
     <div className="card">
       <div className="form-row" ref={topRef} style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
         <h3 style={{ margin: 0 }}>🕐 Recent stock changes</h3>
+        <input
+          type="search"
+          placeholder="Search product or site"
+          className="log-search"
+          value={logSearch}
+          onChange={(e) => setLogSearch(e.target.value)}
+        />
         <div className="log-range">
           <label>
             From <input type="date" value={logFrom} max={logTo || undefined} onChange={(e) => setLogFrom(e.target.value)} />
@@ -112,7 +123,13 @@ function RecentStockChanges({ siteFilter, activityCutoff, hours }) {
       ) : error ? (
         <p style={{ color: "#a71d1d" }}>{error.message}</p>
       ) : filtered.length === 0 ? (
-        <p style={{ color: "#487474" }}>No stock changes recorded yet.</p>
+        <p style={{ color: "var(--text-muted)" }}>
+          {/* "Nothing recorded yet" is only true when nothing was filtered out. Said after
+              a search that missed, it reads as though the log itself were empty. */}
+          {events.length === 0
+            ? "No stock changes recorded yet."
+            : `No stock changes match${logSearch ? ` “${logSearch}”` : " those filters"}.`}
+        </p>
       ) : (
         <div className="table-scroll">
           <table>

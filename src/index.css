@@ -781,3 +781,7 @@ tr.row-selected td { background: var(--blue-50); }
   .stat-tile-label { font-size: 10.5px; letter-spacing: 0.03em; }
   .stat-tile-note { font-size: 11px; }
 }
+
+/* Search box in the stock-change log header. Grows into whatever the heading and the date
+   range leave, so it is usable on a wide card without crowding them on a narrow one. */
+.log-search { flex: 1 1 180px; min-width: 140px; font-size: 12px; padding: 5px 9px; }
